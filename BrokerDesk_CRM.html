@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BrokerDesk — Mortgage CRM</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#fff;--bg2:#f8f8f6;--bg3:#f0efe9;
+  --text:#0f0f0f;--text2:#6b7280;--text3:#9ca3af;
+  --border:#e5e7eb;--border2:#d1d5db;
+  --brand:#1e40af;--brand2:#3b82f6;--brand-light:#eff6ff;
+  --rad:10px;--rad-lg:14px;--rad-xl:20px;
+  --sh:0 1px 3px rgba(0,0,0,.08);--sh-md:0 4px 16px rgba(0,0,0,.10);--sh-lg:0 12px 40px rgba(0,0,0,.14);
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:var(--text);background:var(--bg3);min-height:100vh;font-size:14px;-webkit-font-smoothing:antialiased}
+.layout{display:flex;min-height:100vh}
+.sidebar{width:220px;background:linear-gradient(180deg,#0f172a,#1e293b);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:40;flex-shrink:0}
+.sb-logo{padding:22px 20px 16px;border-bottom:1px solid rgba(255,255,255,.08)}
+.sb-icon{width:36px;height:36px;background:linear-gradient(135deg,#3b82f6,#6366f1);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;margin-bottom:10px}
+.sb-name{font-size:16px;font-weight:700;color:#fff;letter-spacing:-.02em}
+.sb-sub{font-size:10px;color:rgba(255,255,255,.4);margin-top:1px;letter-spacing:.04em;text-transform:uppercase}
+.sb-nav{padding:14px 10px;flex:1}
+.sb-sec{font-size:9px;font-weight:700;color:rgba(255,255,255,.3);letter-spacing:.08em;text-transform:uppercase;padding:0 10px;margin:16px 0 6px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:var(--rad);cursor:pointer;color:rgba(255,255,255,.6);font-size:13px;font-weight:500;transition:all .15s;margin-bottom:2px;border:none;background:transparent;width:100%;font-family:inherit;text-align:left}
+.nav-item:hover{background:rgba(255,255,255,.08);color:#fff}
+.nav-item.active{background:rgba(59,130,246,.25);color:#fff}
+.nav-icon{width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.nav-badge{margin-left:auto;background:rgba(239,68,68,.9);color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:8px;display:none}
+.sb-bottom{padding:14px 10px;border-top:1px solid rgba(255,255,255,.08)}
+.sb-user{display:flex;align-items:center;gap:10px;padding:8px 10px}
+.sb-av{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#6366f1);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0}
+.sb-uname{font-size:12px;font-weight:600;color:#fff}
+.sb-urole{font-size:10px;color:rgba(255,255,255,.4)}
+.main{margin-left:220px;flex:1;display:flex;flex-direction:column;min-height:100vh}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;background:var(--bg);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:30;flex-wrap:wrap;gap:10px}
+.tb-title{font-size:17px;font-weight:700;letter-spacing:-.02em}
+.tb-sub{font-size:12px;color:var(--text2);margin-top:1px}
+.tb-right{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.btn{padding:8px 16px;border-radius:var(--rad);border:1px solid var(--border2);background:var(--bg);color:var(--text);cursor:pointer;font-size:13px;font-family:inherit;font-weight:500;display:inline-flex;align-items:center;gap:6px;transition:all .12s;white-space:nowrap}
+.btn:hover{background:var(--bg2)}
+.btn-p{background:linear-gradient(135deg,#1e40af,#3b82f6);color:#fff;border:none;box-shadow:0 2px 8px rgba(59,130,246,.35)}
+.btn-p:hover{opacity:.92}
+.btn-s{background:linear-gradient(135deg,#065f46,#059669);color:#fff;border:none;box-shadow:0 2px 8px rgba(5,150,105,.3)}
+.btn-s:hover{opacity:.92}
+.btn-d{background:#fef2f2;color:#dc2626;border-color:#fecaca}
+.btn-d:hover{background:#fee2e2}
+.btn-lg{padding:10px 22px;font-size:14px;border-radius:var(--rad-lg)}
+.content{padding:24px;flex:1}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px}
+.scard{background:var(--bg);border:1px solid var(--border);border-radius:var(--rad-lg);padding:18px 20px;box-shadow:var(--sh);position:relative;overflow:hidden}
+.scard::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.scard.c-blue::before{background:linear-gradient(90deg,#1e40af,#3b82f6)}
+.scard.c-green::before{background:linear-gradient(90deg,#065f46,#10b981)}
+.scard.c-amber::before{background:linear-gradient(90deg,#92400e,#f59e0b)}
+.scard.c-red::before{background:linear-gradient(90deg,#991b1b,#ef4444)}
+.scard.c-purple::before{background:linear-gradient(90deg,#5b21b6,#8b5cf6)}
+.sic{width:38px;height:38px;border-radius:var(--rad);display:flex;align-items:center;justify-content:center;font-size:18px;margin-bottom:10px}
+.sic.c-blue{background:#eff6ff}.sic.c-green{background:#f0fdf4}.sic.c-amber{background:#fffbeb}.sic.c-red{background:#fef2f2}.sic.c-purple{background:#f5f3ff}
+.slbl{font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
+.sval{font-size:26px;font-weight:800;letter-spacing:-.03em;line-height:1}
+.ssub{font-size:11px;color:var(--text3);margin-top:5px}
+.kanban-wrap{overflow-x:auto;padding-bottom:16px}
+.kanban{display:flex;gap:12px;min-width:max-content;align-items:flex-start;padding:2px}
+.kcol{background:var(--bg2);border-radius:var(--rad-lg);padding:12px;width:190px;flex-shrink:0;border:1px solid var(--border);box-shadow:var(--sh)}
+.kcol-head{margin-bottom:10px}
+.kcol-tr{display:flex;justify-content:space-between;align-items:center;margin-bottom:2px}
+.kdot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-right:5px}
+.ktitle{font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;display:flex;align-items:center}
+.kcnt{font-size:11px;font-weight:700;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:1px 8px;color:var(--text2)}
+.kval{font-size:10px;color:var(--text3);font-weight:600;margin-top:2px;padding-left:13px}
+.kcard{background:var(--bg);border:1px solid var(--border);border-radius:var(--rad);padding:12px;margin-bottom:8px;cursor:pointer;transition:all .12s;box-shadow:var(--sh)}
+.kcard:hover{border-color:var(--brand2);box-shadow:0 4px 16px rgba(59,130,246,.15);transform:translateY(-1px)}
+.kacc{height:3px;border-radius:2px;margin-bottom:10px}
+.kname{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:1px}
+.kco{font-size:10px;color:var(--text2);margin-bottom:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kamt{font-size:13px;font-weight:800;color:var(--brand);margin-bottom:6px}
+.kfoot{display:flex;gap:4px;flex-wrap:wrap;align-items:center}
+.klender{font-size:10px;color:var(--text2);max-width:100px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:var(--bg2);padding:2px 6px;border-radius:5px}
+.krate{font-size:10px;color:var(--text2);background:var(--bg2);padding:2px 6px;border-radius:5px}
+.kempty{font-size:11px;color:var(--text3);text-align:center;padding:24px 0;font-style:italic;border:1.5px dashed var(--border);border-radius:var(--rad);margin-top:4px}
+.rpill{font-size:10px;font-weight:700;padding:2px 7px;border-radius:6px;white-space:nowrap}
+.purgnt{background:#fef2f2;color:#991b1b}
+.psoon{background:#fffbeb;color:#92400e}
+.pokk{background:#f0fdf4;color:#065f46}
+.badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600}
+.sbar{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center}
+.sbar input,.sbar select{padding:9px 13px;border-radius:var(--rad);border:1px solid var(--border2);background:var(--bg);color:var(--text);font-size:13px;font-family:inherit;box-shadow:var(--sh)}
+.sbar input{flex:1;min-width:200px}
+.sbar input:focus,.sbar select:focus{outline:none;border-color:var(--brand2);box-shadow:0 0 0 3px rgba(59,130,246,.12)}
+.twrap{background:var(--bg);border:1px solid var(--border);border-radius:var(--rad-lg);overflow:hidden;box-shadow:var(--sh)}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;font-size:10px;font-weight:700;color:var(--text2);padding:10px 14px;border-bottom:1px solid var(--border);letter-spacing:.05em;text-transform:uppercase;background:var(--bg2)}
+td{padding:11px 14px;border-bottom:1px solid var(--border);font-size:13px;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--brand-light)}
+.rrow{display:flex;align-items:center;gap:14px;padding:12px 16px;border-radius:var(--rad-lg);margin-bottom:8px;cursor:pointer;border:1px solid transparent;transition:all .12s;box-shadow:var(--sh)}
+.rrow:hover{box-shadow:var(--sh-md);transform:translateY(-1px)}
+.r-urgnt{background:#fef2f2;border-color:#fecaca}
+.r-soon{background:#fffbeb;border-color:#fde68a}
+.r-ok{background:var(--bg);border-color:var(--border)}
+.sec-head{font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin:20px 0 10px;display:flex;align-items:center;gap:8px}
+.sec-head::after{content:'';flex:1;height:1px;background:var(--border)}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.panel{background:var(--bg);border:1px solid var(--border);border-radius:var(--rad-lg);padding:18px;box-shadow:var(--sh)}
+.panel h3{font-size:13px;font-weight:700;margin-bottom:14px}
+.blbl{display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px}
+.btrack{height:6px;background:var(--bg3);border-radius:4px;overflow:hidden}
+.bfill{height:6px;border-radius:4px}
+.av{border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0}
+.empty-s{text-align:center;padding:70px 20px}
+a{color:var(--brand);text-decoration:none}
+a:hover{text-decoration:underline}
+.modal-wrap{position:fixed;inset:0;background:rgba(15,23,42,.6);display:flex;align-items:flex-start;justify-content:center;z-index:200;padding:24px 12px;overflow-y:auto;backdrop-filter:blur(4px)}
+.modal{background:var(--bg);border-radius:var(--rad-xl);width:720px;max-width:98vw;border:1px solid var(--border);box-shadow:var(--sh-lg);overflow:hidden}
+.mhdr{padding:22px 26px;border-bottom:1px solid var(--border);background:linear-gradient(135deg,#0f172a,#1e3a5f);display:flex;justify-content:space-between;align-items:flex-start}
+.mhdr-title{font-size:17px;font-weight:700;color:#fff;letter-spacing:-.02em}
+.mhdr-sub{font-size:12px;color:rgba(255,255,255,.5);margin-top:3px}
+.mbody{padding:0 26px 8px;max-height:70vh;overflow-y:auto}
+.fsec{margin-top:22px}
+.fsec-hdr{display:flex;align-items:center;gap:12px;margin-bottom:14px;padding-bottom:10px;border-bottom:2px solid var(--border)}
+.fsec-icon{width:34px;height:34px;border-radius:var(--rad);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;background:var(--bg3)}
+.fsec-title{font-size:14px;font-weight:700}
+.fsec-sub{font-size:11px;color:var(--text2);margin-top:1px}
+.fg{display:grid;gap:12px;margin-bottom:14px}
+.fg2{grid-template-columns:1fr 1fr}
+.fg3{grid-template-columns:1fr 1fr 1fr}
+.fg4{grid-template-columns:1fr 1fr 1fr 1fr}
+.field{display:flex;flex-direction:column;gap:5px}
+.field label{font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.04em}
+.field input,.field select,.field textarea{padding:9px 12px;border-radius:var(--rad);border:1px solid var(--border2);background:var(--bg);color:var(--text);font-size:13px;font-family:inherit;transition:all .12s;box-shadow:var(--sh);width:100%}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--brand2);box-shadow:0 0 0 3px rgba(59,130,246,.12)}
+.field input::placeholder,.field textarea::placeholder{color:var(--text3)}
+.field textarea{resize:vertical;min-height:72px}
+.mfoot{display:flex;gap:10px;padding:18px 26px;border-top:1px solid var(--border);background:var(--bg2);flex-wrap:wrap}
+.sec-t{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text2);margin:18px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+.igrid{display:grid;grid-template-columns:1fr 1fr}
+.icell{padding:9px 0;border-bottom:1px solid var(--border)}
+.ilbl{font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.04em;font-weight:600}
+.ival{font-size:13px;font-weight:500;margin-top:2px;word-break:break-word}
+.note-area{width:100%;border:1px solid var(--border2);border-radius:var(--rad);padding:10px 12px;font-size:13px;font-family:inherit;color:var(--text);background:var(--bg);resize:none;box-shadow:var(--sh)}
+.note-area:focus{outline:none;border-color:var(--brand2);box-shadow:0 0 0 3px rgba(59,130,246,.12)}
+.nentry{font-size:12px;padding:8px 0;border-bottom:1px solid var(--border);color:var(--text2);line-height:1.6;display:flex;gap:8px}
+.ndot{width:6px;height:6px;border-radius:50%;background:var(--brand2);margin-top:5px;flex-shrink:0}
+.ref-row{margin-bottom:14px;cursor:pointer;padding:10px;border-radius:var(--rad);border:1px solid transparent;transition:all .12s}
+.ref-row:hover{background:var(--bg2);border-color:var(--border)}
+.ref-row.selected{background:var(--brand-light);border-color:var(--brand2)}
+.toast{position:fixed;bottom:24px;right:24px;background:#0f172a;color:#fff;padding:12px 20px;border-radius:var(--rad-lg);font-size:13px;font-weight:500;z-index:999;box-shadow:var(--sh-lg);display:flex;align-items:center;gap:8px;animation:slideUp .2s ease}
+.toast.error{background:#991b1b}
+@keyframes slideUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-overlay{position:fixed;inset:0;background:rgba(255,255,255,.8);display:flex;align-items:center;justify-content:center;z-index:500;flex-direction:column;gap:12px}
+.loading-overlay .spinner{width:32px;height:32px;border:3px solid #e5e7eb;border-top-color:var(--brand);border-radius:50%}
+@media(max-width:900px){.sidebar{width:60px}.sb-name,.sb-sub,.nav-item span,.sb-uname,.sb-urole,.sb-sec{display:none}.main{margin-left:60px}.sb-logo{padding:14px 10px}.sb-icon{margin:0 auto}.nav-item{justify-content:center;padding:10px}}
+@media(max-width:680px){.stats{grid-template-columns:1fr 1fr}.two-col,.fg2,.fg3,.fg4{grid-template-columns:1fr}.igrid{grid-template-columns:1fr}.main{margin-left:0}.sidebar{display:none}}
+</style>
+</head>
+<body>
+<div class="layout">
+<aside class="sidebar">
+  <div class="sb-logo"><div class="sb-icon">🏦</div><div class="sb-name">BrokerDesk</div><div class="sb-sub">Mortgage CRM</div></div>
+  <nav class="sb-nav">
+    <div class="sb-sec">Main</div>
+    <button class="nav-item active" id="nav-dashboard" onclick="goTab('dashboard',this)"><span class="nav-icon">📊</span><span>Dashboard</span></button>
+    <button class="nav-item" id="nav-pipeline" onclick="goTab('pipeline',this)"><span class="nav-icon">🗂</span><span>Kanban Pipeline</span></button>
+    <button class="nav-item" id="nav-contacts" onclick="goTab('contacts',this)"><span class="nav-icon">👥</span><span>Contacts</span></button>
+    <button class="nav-item" id="nav-referrals" onclick="goTab('referrals',this)"><span class="nav-icon">🤝</span><span>Referral Partners</span></button>
+    <div class="sb-sec">Alerts</div>
+    <button class="nav-item" id="nav-renewals" onclick="goTab('renewals',this)"><span class="nav-icon">🔔</span><span>Renewals</span><span class="nav-badge" id="rbadge"></span></button>
+  </nav>
+  <div class="sb-bottom"><div class="sb-user"><div class="sb-av">VB</div><div><div class="sb-uname">Vatsal Barot</div><div class="sb-urole">Mortgage Broker · NB</div></div></div></div>
+</aside>
+<div class="main">
+  <div class="topbar">
+    <div><div class="tb-title" id="tb-title">Dashboard</div><div class="tb-sub" id="tb-sub">Welcome back, Vatsal</div></div>
+    <div class="tb-right">
+      <button class="btn btn-s btn-lg" onclick="showForm()">+ Add Deal</button>
+      <button class="btn" onclick="doExport()">↓ Export CSV</button>
+      <button class="btn" onclick="document.getElementById('fi').click()">↑ Import Filogix</button>
+      <input type="file" id="fi" accept=".csv" style="display:none" onchange="onImport(this)">
+    </div>
+  </div>
+  <div class="content" id="content"></div>
+</div>
+</div>
+
+<script>
+// ── SUPABASE CONFIG ──
+var SUPA_URL = 'https://iffiglyfjnfclwcuegme.supabase.co';
+var SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlmZmlnbHlmam5mY2x3Y3VlZ21lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1NTE3MDEsImV4cCI6MjA5MjEyNzcwMX0.0whpcoPcE_rlCRG-XWZWoGLKiRKNgeDykt2JHYT-6d0';
+
+// ── SUPABASE API ──
+async function sbFetch(path, opts){
+  var res = await fetch(SUPA_URL+'/rest/v1/'+path, Object.assign({
+    headers:{
+      'apikey': SUPA_KEY,
+      'Authorization': 'Bearer '+SUPA_KEY,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=representation'
+    }
+  }, opts));
+  if(!res.ok){
+    var err = await res.text();
+    throw new Error(err);
+  }
+  var text = await res.text();
+  return text ? JSON.parse(text) : [];
+}
+
+async function dbGetDeals(){
+  return await sbFetch('deals?select=*&order=created_at.desc');
+}
+async function dbGetNotes(dealId){
+  return await sbFetch('notes?deal_id=eq.'+dealId+'&order=created_at.asc');
+}
+async function dbInsertDeal(d){
+  return await sbFetch('deals', {method:'POST', body:JSON.stringify(dealToRow(d))});
+}
+async function dbUpdateDeal(d){
+  return await sbFetch('deals?id=eq.'+d.id, {method:'PATCH', body:JSON.stringify(dealToRow(d))});
+}
+async function dbDeleteDeal(id){
+  return await sbFetch('deals?id=eq.'+id, {method:'DELETE'});
+}
+async function dbInsertNote(dealId, noteDate, noteText){
+  return await sbFetch('notes', {method:'POST', body:JSON.stringify({deal_id:dealId, note_date:noteDate, note_text:noteText})});
+}
+async function dbUpdateStage(id, stage){
+  return await sbFetch('deals?id=eq.'+id, {method:'PATCH', body:JSON.stringify({stage:stage})});
+}
+
+// Map JS deal object to DB row
+function dealToRow(d){
+  return {
+    id:d.id, name:d.name,
+    b1_first:d.b1First, b1_last:d.b1Last, b1_name:d.b1Name,
+    b1_dob:d.b1DOB, b1_cell:d.b1Cell, b1_email:d.b1Email,
+    b1_employer:d.b1Employer, b1_occ:d.b1Occ,
+    b1_street:d.b1Street, b1_city:d.b1City, b1_prov:d.b1Prov, b1_postal:d.b1Postal,
+    b2_first:d.b2First, b2_last:d.b2Last, b2_name:d.b2Name,
+    b2_dob:d.b2DOB, b2_cell:d.b2Cell, b2_email:d.b2Email,
+    b2_employer:d.b2Employer, b2_occ:d.b2Occ,
+    prop_street:d.propStreet, prop_city:d.propCity, prop_prov:d.propProv, prop_postal:d.propPostal,
+    property:d.property, occupancy:d.occupancy, prop_value:d.propValue,
+    amount:d.amount, lender:d.lender, mort_type:d.mortType,
+    rate:d.rate, int_type:d.intType, term:d.term, amort:d.amort,
+    closing:d.closing, first_pay:d.firstPay, renewal:d.renewal,
+    app_type:d.appType, entry_date:d.entryDate, stage:d.stage,
+    ref_name:d.refName, ref_company:d.refCompany, ref_type:d.refType,
+    ref_email:d.refEmail, ref_phone:d.refPhone, init_notes:d.initNotes
+  };
+}
+
+// Map DB row to JS deal object
+function rowToDeal(r){
+  return {
+    id:r.id, name:r.name,
+    b1First:r.b1_first, b1Last:r.b1_last, b1Name:r.b1_name,
+    b1DOB:r.b1_dob, b1Cell:r.b1_cell, b1Email:r.b1_email,
+    b1Employer:r.b1_employer, b1Occ:r.b1_occ,
+    b1Street:r.b1_street, b1City:r.b1_city, b1Prov:r.b1_prov, b1Postal:r.b1_postal,
+    b2First:r.b2_first, b2Last:r.b2_last, b2Name:r.b2_name||'',
+    b2DOB:r.b2_dob, b2Cell:r.b2_cell, b2Email:r.b2_email,
+    b2Employer:r.b2_employer, b2Occ:r.b2_occ,
+    propStreet:r.prop_street, propCity:r.prop_city, propProv:r.prop_prov, propPostal:r.prop_postal,
+    property:r.property, occupancy:r.occupancy, propValue:r.prop_value,
+    amount:r.amount, lender:r.lender, mortType:r.mort_type,
+    rate:r.rate, intType:r.int_type, term:r.term, amort:r.amort,
+    closing:r.closing, firstPay:r.first_pay, renewal:r.renewal,
+    appType:r.app_type, entryDate:r.entry_date, stage:r.stage||'Lead',
+    refName:r.ref_name, refCompany:r.ref_company, refType:r.ref_type,
+    refEmail:r.ref_email, refPhone:r.ref_phone, initNotes:r.init_notes
+  };
+}
+
+// ── CONSTANTS ──
+var STAGES=['Lead','Info Only / No Deal','Pre-Approval','Documents Received','Application Submitted','Approved','Conditions Cleared','Funded','Check In'];
+var SDOT=['#9ca3af','#f59e0b','#3b82f6','#8b5cf6','#10b981','#22c55e','#ec4899','#16a34a','#f59e0b'];
+var SBAR=['#6b7280','#d97706','#2563eb','#7c3aed','#059669','#15803d','#be185d','#15803d','#d97706'];
+var SBG=['#f9fafb','#fffbeb','#eff6ff','#f5f3ff','#f0fdf4','#f0fdf4','#fdf2f8','#f0fdf4','#fffbeb'];
+var SFG=['#374151','#92400e','#1e40af','#5b21b6','#065f46','#14532d','#831843','#14532d','#78350f'];
+var PCOLORS=['#2563eb','#059669','#d97706','#7c3aed','#be185d','#0891b2','#65a30d','#dc2626','#9333ea','#0d9488'];
+var AVP=[['#dbeafe','#1e40af'],['#dcfce7','#14532d'],['#fef3c7','#92400e'],['#fce7f3','#831843'],['#ede9fe','#5b21b6'],['#ecfdf5','#065f46']];
+var PROVS=['AB','BC','MB','NB','NL','NS','NT','NU','ON','PE','QC','SK','YT'];
+var REFTYPES=['Realtor','Financial Advisor','Accountant','Lawyer / Notary','Insurance Broker','Builder / Developer','Past Client','Friend / Family','Other'];
+var OCCTYPES=['Owner-Occupied','Rental','Owner-Occupied & Rental','Seasonal/Secondary'];
+var ITTYPES=['Fixed','Variable','Adjustable'];
+var MTTYPES=['First','Second','Third'];
+var ATTYPES=['Approval','Pre-Approval'];
+var TITLES={dashboard:'Dashboard',pipeline:'Kanban Pipeline',contacts:'Contacts',referrals:'Referral Partners',renewals:'Renewals'};
+var SUBS={dashboard:'Welcome back, Vatsal',pipeline:'Track your deals across every stage',contacts:'All your mortgage clients in one place',referrals:'See who is sending you business',renewals:'Maturity dates and upcoming renewals'};
+
+// ── STATE ──
+var deals=[], currentTab='dashboard', _refFilter=null, _refSort='count';
+
+// ── HELPERS ──
+function uid(){return 'D'+Date.now()+Math.random().toString(36).slice(2,5);}
+function fmtAmt(v){if(!v)return '—';var n=parseFloat(String(v).replace(/[$,]/g,''));if(isNaN(n)||n===0)return '—';return '$'+Math.round(n).toLocaleString('en-CA');}
+function daysUntil(d){if(!d)return null;var ms=new Date(d)-new Date();if(isNaN(ms))return null;return Math.round(ms/86400000);}
+function rpCls(d){var n=daysUntil(d);if(n===null)return '';return n<60?'purgnt':n<180?'psoon':'pokk';}
+function ini(n){return (n||'?').split(' ').filter(Boolean).slice(0,2).map(function(w){return w[0].toUpperCase();}).join('');}
+function avc(n){var h=0;for(var i=0;i<(n||'').length;i++)h=(h*31+n.charCodeAt(i))%AVP.length;return AVP[h];}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function gv(id){var el=document.getElementById(id);return el?(el.value||'').trim():'';}
+function stageIdx(s){var i=STAGES.indexOf(s);return i>=0?i:0;}
+
+function toast(msg, isError){
+  var t=document.createElement('div');
+  t.className='toast'+(isError?' error':'');
+  t.innerHTML=(isError?'❌ ':'✅ ')+msg;
+  document.body.appendChild(t);
+  setTimeout(function(){t.remove();},3000);
+}
+
+function showLoading(msg){
+  var el=document.createElement('div');
+  el.className='loading-overlay';el.id='loading-overlay';
+  el.innerHTML='<div class="spinner"></div><div style="font-size:13px;color:var(--text2)">'+( msg||'Loading...')+'</div>';
+  document.body.appendChild(el);
+}
+function hideLoading(){var el=document.getElementById('loading-overlay');if(el)el.remove();}
+
+// ── ROUTING ──
+function goTab(tab,el){
+  currentTab=tab;
+  document.querySelectorAll('.nav-item').forEach(function(t){t.classList.remove('active');});
+  (el||document.getElementById('nav-'+tab)).classList.add('active');
+  var tt=document.getElementById('tb-title'),ts=document.getElementById('tb-sub');
+  if(tt)tt.textContent=TITLES[tab]||tab;
+  if(ts)ts.textContent=SUBS[tab]||'';
+  render();
+}
+
+function initAlerts(){
+  var u=deals.filter(function(d){var n=daysUntil(d.renewal);return n!==null&&n<90;});
+  var b=document.getElementById('rbadge');
+  if(b){if(u.length){b.style.display='inline-block';b.textContent=u.length;}else b.style.display='none';}
+}
+
+function render(){
+  initAlerts();
+  var el=document.getElementById('content');if(!el)return;
+  if(!deals.length&&currentTab!=='contacts'&&currentTab!=='referrals'){el.innerHTML=renderEmpty();return;}
+  if(currentTab==='dashboard')el.innerHTML=renderDash();
+  else if(currentTab==='pipeline')el.innerHTML=renderKanban();
+  else if(currentTab==='contacts'){el.innerHTML=renderContacts();wireContacts();}
+  else if(currentTab==='referrals')el.innerHTML=renderReferrals();
+  else if(currentTab==='renewals')el.innerHTML=renderRenewals();
+}
+
+// ── LOAD DATA ──
+async function loadDeals(){
+  showLoading('Loading your deals...');
+  try{
+    var rows=await dbGetDeals();
+    deals=rows.map(rowToDeal);
+    render();
+  }catch(e){
+    toast('Could not connect to database: '+e.message, true);
+    document.getElementById('content').innerHTML='<div style="text-align:center;padding:60px;color:var(--text2)"><div style="font-size:32px;margin-bottom:12px">⚠️</div><div style="font-size:16px;font-weight:700;margin-bottom:8px;color:var(--text)">Database connection failed</div><div style="font-size:13px">Check your internet connection and try refreshing the page.</div></div>';
+  }finally{hideLoading();}
+}
+
+// ── EMPTY STATE ──
+function renderEmpty(){
+  return '<div class="empty-s"><div style="font-size:52px;margin-bottom:18px">🏠</div><div style="font-size:20px;font-weight:800;margin-bottom:8px">No deals yet</div><div style="font-size:14px;color:var(--text2);margin-bottom:28px">Add your first mortgage file to get started.</div><div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap"><button class="btn btn-s btn-lg" onclick="showForm()">+ Add Your First Deal</button><button class="btn btn-lg" onclick="document.getElementById(\'fi\').click()">↑ Import Filogix CSV</button></div></div>';
+}
+
+// ── DASHBOARD ──
+function renderDash(){
+  var total=deals.reduce(function(s,d){var n=parseFloat(d.amount);return s+(isNaN(n)?0:n);},0);
+  var funded=deals.filter(function(d){return d.stage==='Funded';}).length;
+  var urgR=deals.filter(function(d){var n=daysUntil(d.renewal);return n!==null&&n<90;});
+  var active=deals.filter(function(d){return d.stage!=='Funded'&&d.stage!=='Info Only / No Deal';}).length;
+  var h='<div class="stats">'
+    +sc('c-blue','📁','Total Files',deals.length,active+' active')
+    +sc('c-green','💰','Pipeline Value','$'+Math.round(total/1000)+'K','all stages')
+    +sc('c-amber','✅','Funded',funded,Math.round(deals.length?funded/deals.length*100:0)+'% rate')
+    +sc('c-red','🔔','Renewals <90d',urgR.length,urgR.length?'action needed':'all clear')
+    +'</div>';
+  h+='<div class="two-col">';
+  h+='<div class="panel"><h3>📊 Stage breakdown</h3>';
+  STAGES.forEach(function(s,i){
+    var cnt=deals.filter(function(d){return d.stage===s;}).length;
+    var val=deals.filter(function(d){return d.stage===s;}).reduce(function(sum,d){var n=parseFloat(d.amount);return sum+(isNaN(n)?0:n);},0);
+    var pct=deals.length?Math.round(cnt/deals.length*100):0;
+    var sh=s.length>22?s.slice(0,21)+'…':s;
+    h+='<div style="margin-bottom:10px"><div class="blbl"><span style="font-weight:500">'+esc(sh)+'</span><span style="color:var(--text2)">'+cnt+(val>0?' · $'+Math.round(val/1000)+'K':'')+'</span></div><div class="btrack"><div class="bfill" style="background:'+SBAR[i]+';width:'+pct+'%"></div></div></div>';
+  });
+  h+='</div>';
+  h+='<div class="panel"><h3>🔔 Upcoming maturities</h3>';
+  var ups=deals.filter(function(d){return d.renewal;}).sort(function(a,b){return new Date(a.renewal)-new Date(b.renewal);}).slice(0,8);
+  if(!ups.length)h+='<div style="font-size:13px;color:var(--text2)">No maturity dates yet.</div>';
+  ups.forEach(function(d){
+    var n=daysUntil(d.renewal);var ac=avc(d.name);
+    h+='<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--border);cursor:pointer" onclick="openDeal(\''+esc(d.id)+'\')">'
+      +'<div style="display:flex;align-items:center;gap:9px"><div class="av" style="width:28px;height:28px;font-size:10px;background:'+ac[0]+';color:'+ac[1]+'">'+ini(d.name)+'</div>'
+      +'<div><div style="font-size:13px;font-weight:600">'+esc(d.name)+'</div><div style="font-size:11px;color:var(--text2)">'+(d.lender||'—')+'</div></div></div>'
+      +'<span class="rpill '+rpCls(d.renewal)+'">'+(n!==null?n+'d':d.renewal)+'</span></div>';
+  });
+  h+='</div></div>';
+  return h;
+}
+function sc(color,icon,lbl,val,sub){
+  return '<div class="scard '+color+'"><div class="sic '+color+'">'+icon+'</div><div class="slbl">'+lbl+'</div><div class="sval">'+val+'</div><div class="ssub">'+sub+'</div></div>';
+}
+
+// ── KANBAN ──
+function renderKanban(){
+  if(!deals.length)return renderEmpty();
+  var h='<div class="kanban-wrap"><div class="kanban">';
+  STAGES.forEach(function(s,i){
+    var col=deals.filter(function(d){return d.stage===s;});
+    var val=col.reduce(function(sum,d){var n=parseFloat(d.amount);return sum+(isNaN(n)?0:n);},0);
+    h+='<div class="kcol"><div class="kcol-head"><div class="kcol-tr"><div class="ktitle"><span class="kdot" style="background:'+SDOT[i]+'"></span>'+esc(s)+'</div><span class="kcnt">'+col.length+'</span></div>'+(val>0?'<div class="kval">$'+Math.round(val/1000)+'K</div>':'')+'</div>';
+    if(!col.length)h+='<div class="kempty">No files</div>';
+    col.forEach(function(d){
+      var n=daysUntil(d.renewal);
+      var rp=n!==null?'<span class="rpill '+rpCls(d.renewal)+'">'+n+'d</span>':'';
+      h+='<div class="kcard" onclick="openDeal(\''+esc(d.id)+'\')">'
+        +'<div class="kacc" style="background:'+SDOT[i]+'"></div>'
+        +'<div class="kname">'+esc(d.name)+'</div>'
+        +(d.b2Name?'<div class="kco">+ '+esc(d.b2Name)+'</div>':'')
+        +(parseFloat(d.amount)>0?'<div class="kamt">'+fmtAmt(d.amount)+'</div>':'')
+        +'<div class="kfoot">'+(d.lender?'<span class="klender">'+esc(d.lender)+'</span>':'')+(d.rate?'<span class="krate">'+d.rate+'%</span>':'')+rp+'</div></div>';
+    });
+    h+='</div>';
+  });
+  return h+'</div></div>';
+}
+
+// ── CONTACTS ──
+function renderContacts(){
+  return '<div class="sbar"><input id="srch" type="text" placeholder="🔍  Search name, email, phone, city, lender...">'
+    +'<select id="sf-stage" style="min-width:160px"><option value="">All stages</option>'+STAGES.map(function(s){return '<option>'+s+'</option>';}).join('')+'</select>'
+    +'<select id="sf-ren" style="min-width:150px"><option value="">All renewals</option><option value="u">Under 60 days</option><option value="s">Within 6 months</option></select>'
+    +'<button class="btn btn-s" onclick="showForm()">+ Add Deal</button>'
+    +'</div><div class="twrap"><div id="ctbl"></div></div>';
+}
+function wireContacts(){
+  function go(){
+    var q=(document.getElementById('srch')||{}).value||'';
+    var stg=(document.getElementById('sf-stage')||{}).value||'';
+    var ren=(document.getElementById('sf-ren')||{}).value||'';
+    var f=deals;
+    if(stg)f=f.filter(function(d){return d.stage===stg;});
+    if(ren==='u')f=f.filter(function(d){var n=daysUntil(d.renewal);return n!==null&&n<60;});
+    if(ren==='s')f=f.filter(function(d){var n=daysUntil(d.renewal);return n!==null&&n<180;});
+    if(q){var ql=q.toLowerCase();f=f.filter(function(d){return [d.name,d.b2Name,d.b1Email,d.b2Email,d.b1Cell,d.b2Cell,d.lender,d.property,d.b1Employer,d.id,d.refName].join(' ').toLowerCase().includes(ql);});}
+    var tbl=document.getElementById('ctbl');if(!tbl)return;
+    if(!f.length){tbl.innerHTML='<div style="text-align:center;padding:48px;color:var(--text2);font-size:13px">No contacts found.<br><br><button class="btn btn-s" onclick="showForm()">+ Add Deal</button></div>';return;}
+    var h='<table><thead><tr><th>Borrower</th><th>Phone</th><th>Email</th><th>Mortgage</th><th>Lender</th><th>Stage</th><th>Maturity</th></tr></thead><tbody>';
+    f.forEach(function(d){
+      var n=daysUntil(d.renewal);var ac=avc(d.name);var si=stageIdx(d.stage);
+      var sh=d.stage.replace('Application ','App. ').replace('Conditions ','Cond. ').replace('Documents ','Docs ').replace('Info Only / No Deal','No Deal');
+      h+='<tr style="cursor:pointer" onclick="openDeal(\''+esc(d.id)+'\')">'
+        +'<td><div style="display:flex;align-items:center;gap:10px"><div class="av" style="width:34px;height:34px;font-size:12px;background:'+ac[0]+';color:'+ac[1]+'">'+ini(d.name)+'</div>'
+        +'<div><div style="font-weight:700">'+esc(d.name)+'</div>'+(d.b2Name?'<div style="font-size:11px;color:var(--text2)">+ '+esc(d.b2Name)+'</div>':'')+(d.property?'<div style="font-size:10px;color:var(--text3)">'+esc(d.property)+'</div>':'')+'</div></div></td>'
+        +'<td style="font-size:12px;color:var(--text2)">'+(d.b1Cell||'—')+'</td>'
+        +'<td style="font-size:12px">'+(d.b1Email?'<a href="mailto:'+d.b1Email+'">'+esc(d.b1Email)+'</a>':'—')+'</td>'
+        +'<td><strong>'+fmtAmt(d.amount)+'</strong>'+(d.rate?'<div style="font-size:10px;color:var(--text2)">'+d.rate+'% · '+d.term+'mo</div>':'')+'</td>'
+        +'<td style="font-size:12px">'+(d.lender||'—')+'</td>'
+        +'<td><span class="badge" style="background:'+SBG[si]+';color:'+SFG[si]+';font-size:10px">'+esc(sh)+'</span></td>'
+        +'<td>'+(d.renewal?'<div style="font-size:12px;font-weight:700;'+(n!==null&&n<90?'color:#dc2626':'')+'">'+(d.renewal)+'</div>'+(n!==null?'<div style="font-size:10px;color:var(--text3)">'+n+'d</div>':''):'<span style="color:var(--text3)">—</span>')+'</td>'
+        +'</tr>';
+    });
+    tbl.innerHTML=h+'</tbody></table>';
+  }
+  document.getElementById('srch').addEventListener('input',go);
+  document.getElementById('sf-stage').addEventListener('change',go);
+  document.getElementById('sf-ren').addEventListener('change',go);
+  go();
+}
+
+// ── RENEWALS ──
+function renderRenewals(){
+  var withR=deals.filter(function(d){return d.renewal;}).sort(function(a,b){return new Date(a.renewal)-new Date(b.renewal);});
+  var noR=deals.filter(function(d){return !d.renewal;});
+  if(!withR.length)return '<div style="text-align:center;padding:60px;color:var(--text2);font-size:13px">No maturity dates yet. Add them when creating or editing a deal.</div>';
+  var urgent=withR.filter(function(d){var n=daysUntil(d.renewal);return n!==null&&n<60;});
+  var soon=withR.filter(function(d){var n=daysUntil(d.renewal);return n!==null&&n>=60&&n<180;});
+  var later=withR.filter(function(d){var n=daysUntil(d.renewal);return n!==null&&n>=180;});
+  function rsec(title,items,cls){
+    if(!items.length)return '';
+    var h='<div class="sec-head">'+title+' ('+items.length+')</div>';
+    items.forEach(function(d){
+      var n=daysUntil(d.renewal);var si=stageIdx(d.stage);var ac=avc(d.name);
+      h+='<div class="rrow '+cls+'" onclick="openDeal(\''+esc(d.id)+'\')">'
+        +'<div class="av" style="width:36px;height:36px;font-size:13px;background:'+ac[0]+';color:'+ac[1]+'">'+ini(d.name)+'</div>'
+        +'<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:700">'+esc(d.name)+(d.b2Name?' <span style="font-size:11px;font-weight:400;color:var(--text2)">+ '+esc(d.b2Name)+'</span>':'')+'</div>'
+        +'<div style="font-size:11px;color:var(--text2);margin-top:2px">'+[d.lender,d.rate?d.rate+'%':'',d.term?d.term+'mo':''].filter(Boolean).join(' · ')+'</div></div>'
+        +'<div style="text-align:right;flex-shrink:0;min-width:90px"><div style="font-size:13px;font-weight:700">'+d.renewal+'</div><div style="font-size:11px;color:var(--text2)">'+(n!==null?n+' days':'')+'</div></div>'
+        +'<span class="badge" style="background:'+SBG[si]+';color:'+SFG[si]+';flex-shrink:0;font-size:10px;margin-left:8px">'+esc(d.stage)+'</span></div>';
+    });
+    return h;
+  }
+  return rsec('⚠️ Action needed — under 60 days',urgent,'r-urgnt')
+    +rsec('📅 Coming up — within 6 months',soon,'r-soon')
+    +rsec('✅ On track — beyond 6 months',later,'r-ok')
+    +(noR.length?'<div style="font-size:12px;color:var(--text3);margin-top:16px;padding:12px;background:var(--bg2);border-radius:var(--rad)">'+noR.length+' file(s) have no maturity date.</div>':'');
+}
+
+// ── REFERRALS ──
+function renderReferrals(){
+  var refDeals=deals.filter(function(d){return d.refName&&d.refName.trim();});
+  if(!refDeals.length){
+    return '<div style="text-align:center;padding:60px;color:var(--text2)"><div style="font-size:40px;margin-bottom:14px">🤝</div><div style="font-size:16px;font-weight:700;margin-bottom:8px;color:var(--text)">No referral partners yet</div><div style="margin-bottom:20px">Fill in the Referral Partner section when adding a deal.</div><button class="btn btn-s" onclick="showForm()">+ Add a Deal with Referral</button></div>';
+  }
+  var map={};
+  refDeals.forEach(function(d){
+    var key=(d.refName||'').trim();
+    if(!map[key])map[key]={name:key,company:d.refCompany||'',type:d.refType||'',email:d.refEmail||'',phone:d.refPhone||'',deals:[],totalAmt:0,funded:0};
+    map[key].deals.push(d);
+    var amt=parseFloat(d.amount);if(!isNaN(amt)&&amt>0)map[key].totalAmt+=amt;
+    if(d.stage==='Funded')map[key].funded++;
+  });
+  var partners=Object.values(map).sort(function(a,b){return _refSort==='amount'?b.totalAmt-a.totalAmt:b.deals.length-a.deals.length;});
+  var maxDeals=partners[0].deals.length;
+  var totalAmt=refDeals.reduce(function(s,d){var n=parseFloat(d.amount);return s+(isNaN(n)?0:n);},0);
+  var h='<div class="stats" style="grid-template-columns:repeat(3,1fr)">'
+    +sc('c-blue','🤝','Referred Deals',refDeals.length,'of '+deals.length+' total')
+    +sc('c-green','💰','Referred Value','$'+Math.round(totalAmt/1000)+'K','from partners')
+    +sc('c-purple','⭐','Top Partner',esc(partners[0].name.split(' ')[0]),partners[0].deals.length+' deals')
+    +'</div>';
+  h+='<div class="panel" style="margin-bottom:20px">'
+    +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">'
+    +'<h3 style="margin:0">📊 Deals by referral partner</h3>'
+    +'<div style="display:flex;gap:8px">'
+    +'<button class="btn" onclick="sortRef(\'count\')" style="font-size:11px;padding:5px 10px;'+(_refSort==='count'?'background:var(--brand-light);border-color:var(--brand2);color:var(--brand)':'')+'">Sort by deals</button>'
+    +'<button class="btn" onclick="sortRef(\'amount\')" style="font-size:11px;padding:5px 10px;'+(_refSort==='amount'?'background:var(--brand-light);border-color:var(--brand2);color:var(--brand)':'')+'">Sort by value</button>'
+    +'</div></div>';
+  partners.forEach(function(p,i){
+    var pct=maxDeals>0?Math.round(p.deals.length/maxDeals*100):0;
+    var color=PCOLORS[i%PCOLORS.length];
+    var funded=p.funded;var inProg=p.deals.length-funded;
+    var isSelected=(_refFilter===p.name);
+    h+='<div class="ref-row'+(isSelected?' selected':'')+'" onclick="toggleRefFilter(\''+esc(p.name)+'\')">'
+      +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">'
+      +'<div style="display:flex;align-items:center;gap:10px">'
+      +'<div style="width:32px;height:32px;border-radius:50%;background:'+color+'22;color:'+color+';font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">'+ini(p.name)+'</div>'
+      +'<div><div style="font-size:13px;font-weight:700">'+esc(p.name)+'</div>'
+      +(p.company||p.type?'<div style="font-size:10px;color:var(--text2)">'+(p.company?esc(p.company):'')+(p.company&&p.type?' · ':'')+esc(p.type)+'</div>':'')
+      +'</div></div>'
+      +'<div style="text-align:right"><span style="font-size:15px;font-weight:800;color:'+color+'">'+p.deals.length+'</span> <span style="font-size:11px;color:var(--text2)">deal'+(p.deals.length!==1?'s':'')+'</span>'
+      +(p.totalAmt>0?'<div style="font-size:11px;color:var(--text2)">$'+Math.round(p.totalAmt/1000)+'K · '+funded+' funded</div>':'')+'</div></div>'
+      +'<div style="height:10px;background:var(--bg3);border-radius:6px;overflow:hidden"><div style="height:10px;width:'+pct+'%;border-radius:6px;display:flex;overflow:hidden">'
+      +(funded>0?'<div style="flex:'+funded+';background:'+color+'"></div>':'')
+      +(inProg>0?'<div style="flex:'+inProg+';background:'+color+'66"></div>':'')
+      +'</div></div>'
+      +(isSelected?'<div style="font-size:10px;color:var(--brand);margin-top:6px;text-align:right">Showing deals below ↓ — click to clear</div>':'')
+      +'</div>';
+  });
+  h+='<div style="display:flex;align-items:center;gap:16px;margin-top:14px;font-size:11px;color:var(--text2)">'
+    +'<span><span style="display:inline-block;width:12px;height:8px;background:#2563eb;border-radius:3px;margin-right:4px"></span>Funded</span>'
+    +'<span><span style="display:inline-block;width:12px;height:8px;background:#2563eb66;border-radius:3px;margin-right:4px"></span>In progress</span>'
+    +'</div></div>';
+  h+='<div class="panel"><h3 style="margin-bottom:14px">'+(_refFilter?'Deals from '+esc(_refFilter):'All referred deals')+'</h3><div class="twrap">'+buildRefTable(_refFilter)+'</div></div>';
+  return h;
+}
+function buildRefTable(pf){
+  var f=deals.filter(function(d){return d.refName&&d.refName.trim();});
+  if(pf)f=f.filter(function(d){return (d.refName||'').trim()===pf;});
+  if(!f.length)return '<div style="padding:24px;text-align:center;color:var(--text2);font-size:13px">No deals found.</div>';
+  var allP=[];deals.forEach(function(d){var k=(d.refName||'').trim();if(k&&allP.indexOf(k)<0)allP.push(k);});
+  var h='<table><thead><tr><th>Borrower</th><th>Referral Partner</th><th>Type</th><th>Mortgage</th><th>Lender</th><th>Stage</th><th>Entered</th></tr></thead><tbody>';
+  f.forEach(function(d){
+    var ac=avc(d.name);var si=stageIdx(d.stage);var pi=allP.indexOf((d.refName||'').trim());var pc=PCOLORS[pi%PCOLORS.length];
+    var sh=d.stage.replace('Application ','App. ').replace('Conditions ','Cond. ').replace('Documents ','Docs ').replace('Info Only / No Deal','No Deal');
+    h+='<tr style="cursor:pointer" onclick="openDeal(\''+esc(d.id)+'\')">'
+      +'<td><div style="display:flex;align-items:center;gap:9px"><div class="av" style="width:30px;height:30px;font-size:11px;background:'+ac[0]+';color:'+ac[1]+'">'+ini(d.name)+'</div><div style="font-weight:600">'+esc(d.name)+'</div></div></td>'
+      +'<td><div style="display:flex;align-items:center;gap:7px"><div style="width:8px;height:8px;border-radius:50%;background:'+pc+';flex-shrink:0"></div><div><div style="font-weight:600;font-size:13px">'+esc(d.refName)+'</div>'+(d.refCompany?'<div style="font-size:10px;color:var(--text2)">'+esc(d.refCompany)+'</div>':'')+'</div></div></td>'
+      +'<td style="font-size:12px;color:var(--text2)">'+(d.refType||'—')+'</td>'
+      +'<td><strong>'+fmtAmt(d.amount)+'</strong>'+(d.rate?'<div style="font-size:10px;color:var(--text2)">'+d.rate+'%</div>':'')+'</td>'
+      +'<td style="font-size:12px">'+(d.lender||'—')+'</td>'
+      +'<td><span class="badge" style="background:'+SBG[si]+';color:'+SFG[si]+';font-size:10px">'+esc(sh)+'</span></td>'
+      +'<td style="font-size:12px;color:var(--text2)">'+(d.entryDate||'—')+'</td></tr>';
+  });
+  return h+'</tbody></table>';
+}
+function toggleRefFilter(name){_refFilter=(_refFilter===name)?null:name;render();}
+function sortRef(by){_refSort=by;render();}
+
+// ── ADD / EDIT FORM ──
+function showForm(existingId){
+  var d=existingId?deals.find(function(x){return x.id===existingId;}):null;
+  closeAny();
+  function selOpts(arr,val){return arr.map(function(v){return '<option value="'+esc(v)+'"'+(v===val?' selected':'')+'>'+esc(v)+'</option>';}).join('');}
+  function provOpts(val){return '<option value="">—</option>'+selOpts(PROVS,val);}
+  var stageOpts=STAGES.map(function(s){return '<option value="'+esc(s)+'"'+((d?d.stage===s:s==='Lead')?' selected':'')+'>'+esc(s)+'</option>';}).join('');
+  var html='<div class="modal-wrap" id="add-wrap" onclick="closeAddBg(event)">'
+    +'<div class="modal">'
+    +'<div class="mhdr"><div><div class="mhdr-title">'+(d?'✏️ Edit Deal — '+esc(d.name):'🏠 New Mortgage Application')+'</div><div class="mhdr-sub">Borrower name is the only required field — all others optional</div></div>'
+    +'<button class="btn" style="background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.2);flex-shrink:0" onclick="closeAdd()">✕ Close</button></div>'
+    +'<div class="mbody">'
+    // Deal Info
+    +'<div class="fsec"><div class="fsec-hdr"><div class="fsec-icon">📋</div><div><div class="fsec-title">Deal Information</div><div class="fsec-sub">Stage, application type, and file date</div></div></div>'
+    +'<div class="fg fg3">'+F('af-stage','Stage','select','<option value="">Select…</option>'+stageOpts)+F('af-appType','Application Type','select','<option value="">Select…</option>'+selOpts(ATTYPES,d&&d.appType))+F('af-entryDate','File Date','date','',d&&d.entryDate)+'</div></div>'
+    // Primary Borrower
+    +'<div class="fsec"><div class="fsec-hdr"><div class="fsec-icon">👤</div><div><div class="fsec-title">Primary Borrower</div><div class="fsec-sub">Main applicant personal and contact information</div></div></div>'
+    +'<div class="fg fg2">'+F('af-b1f','First Name','text','e.g. John',d&&d.b1First)+F('af-b1l','Last Name','text','e.g. Smith',d&&d.b1Last)+'</div>'
+    +'<div class="fg fg3">'+F('af-b1dob','Date of Birth','date','',d&&d.b1DOB)+F('af-b1cell','Cell Phone','tel','e.g. 506-555-0100',d&&d.b1Cell)+F('af-b1email','Email Address','email','e.g. john@email.com',d&&d.b1Email)+'</div>'
+    +'<div class="fg fg2">'+F('af-b1employer','Employer / Company','text','e.g. Irving Oil',d&&d.b1Employer)+F('af-b1occ','Occupation','text','e.g. Engineer',d&&d.b1Occ)+'</div>'
+    +'<div class="fg fg4">'+F('af-b1street','Street Address','text','e.g. 123 Main St',d&&d.b1Street)+F('af-b1city','City','text','e.g. Moncton',d&&d.b1City)+F('af-b1prov','Province','select',provOpts(d&&d.b1Prov))+F('af-b1postal','Postal Code','text','e.g. E1C 1A1',d&&d.b1Postal)+'</div></div>'
+    // Co-Borrower
+    +'<div class="fsec"><div class="fsec-hdr"><div class="fsec-icon">👥</div><div><div class="fsec-title">Co-Borrower</div><div class="fsec-sub">Second applicant — leave blank if none</div></div></div>'
+    +'<div class="fg fg2">'+F('af-b2f','First Name','text','e.g. Jane',d&&d.b2First)+F('af-b2l','Last Name','text','e.g. Smith',d&&d.b2Last)+'</div>'
+    +'<div class="fg fg3">'+F('af-b2dob','Date of Birth','date','',d&&d.b2DOB)+F('af-b2cell','Cell Phone','tel','',d&&d.b2Cell)+F('af-b2email','Email Address','email','',d&&d.b2Email)+'</div>'
+    +'<div class="fg fg2">'+F('af-b2employer','Employer / Company','text','',d&&d.b2Employer)+F('af-b2occ','Occupation','text','',d&&d.b2Occ)+'</div></div>'
+    // Property
+    +'<div class="fsec"><div class="fsec-hdr"><div class="fsec-icon">🏠</div><div><div class="fsec-title">Subject Property</div><div class="fsec-sub">The property being purchased or refinanced</div></div></div>'
+    +'<div class="fg fg4">'+F('af-pstreet','Street Address','text','e.g. 42 Maple St',d&&d.propStreet)+F('af-pcity','City','text','e.g. Moncton',d&&d.propCity)+F('af-pprov','Province','select',provOpts(d&&d.propProv))+F('af-ppostal','Postal Code','text','',d&&d.propPostal)+'</div>'
+    +'<div class="fg fg2">'+F('af-occupancy','Property Use','select','<option value="">Select…</option>'+selOpts(OCCTYPES,d&&d.occupancy))+F('af-propval','Estimated Value ($)','text','e.g. 400000',d&&d.propValue)+'</div></div>'
+    // Mortgage
+    +'<div class="fsec"><div class="fsec-hdr"><div class="fsec-icon">💰</div><div><div class="fsec-title">Mortgage Details</div><div class="fsec-sub">Loan amount, rate, term, and lender information</div></div></div>'
+    +'<div class="fg fg3">'+F('af-amount','Mortgage Amount ($)','text','e.g. 350000',d&&d.amount)+F('af-lender','Lender Name','text','e.g. First National',d&&d.lender)+F('af-mortType','Mortgage Position','select','<option value="">Select…</option>'+selOpts(MTTYPES,d&&d.mortType))+'</div>'
+    +'<div class="fg fg4">'+F('af-rate','Interest Rate (%)','text','e.g. 4.99',d&&d.rate)+F('af-intType','Rate Type','select','<option value="">Select…</option>'+selOpts(ITTYPES,d&&d.intType))+F('af-term','Term (months)','text','e.g. 60',d&&d.term)+F('af-amort','Amortization (mo)','text','e.g. 300',d&&d.amort)+'</div>'
+    +'<div class="fg fg3">'+F('af-closing','Closing Date','date','',d&&d.closing)+F('af-firstPay','First Payment Date','date','',d&&d.firstPay)+F('af-renewal','Maturity / Renewal Date','date','',d&&d.renewal)+'</div></div>'
+    // Referral
+    +'<div class="fsec"><div class="fsec-hdr"><div class="fsec-icon">🤝</div><div><div class="fsec-title">Referral Partner</div><div class="fsec-sub">Who referred this client — leave blank if none</div></div></div>'
+    +'<div class="fg fg3">'+F('af-refName','Partner Name','text','e.g. John Doe',d&&d.refName)+F('af-refCompany','Company / Brokerage','text','e.g. RE/MAX',d&&d.refCompany)+F('af-refType','Partner Type','select','<option value="">Select…</option>'+selOpts(REFTYPES,d&&d.refType))+'</div>'
+    +'<div class="fg fg2">'+F('af-refEmail','Partner Email','email','',d&&d.refEmail)+F('af-refPhone','Partner Phone','tel','',d&&d.refPhone)+'</div></div>'
+    // Notes
+    +'<div class="fsec"><div class="fsec-hdr"><div class="fsec-icon">📝</div><div><div class="fsec-title">Notes</div><div class="fsec-sub">Any additional details about this file</div></div></div>'
+    +'<div class="field"><label>Internal notes</label><textarea id="af-notes" placeholder="e.g. First-time buyer, pre-approval needed by Friday...">'+(d&&d.initNotes||'')+'</textarea></div></div>'
+    +'</div>'
+    +'<div class="mfoot">'
+    +'<button class="btn btn-s btn-lg" id="save-btn" onclick="saveDeal(\''+(existingId||'')+'\')">'+(existingId?'💾 Save Changes':'✅ Add Deal')+'</button>'
+    +(existingId?'<button class="btn btn-d" onclick="deleteDeal(\''+existingId+'\')">🗑 Delete Deal</button>':'')
+    +'<button class="btn btn-lg" onclick="closeAdd()">Cancel</button>'
+    +'</div></div></div>';
+  document.body.insertAdjacentHTML('beforeend',html);
+}
+
+function F(id,label,type,optsOrPh,val){
+  var inner='';
+  if(type==='select') inner='<select id="'+id+'">'+optsOrPh+'</select>';
+  else if(type==='textarea') inner='<textarea id="'+id+'" placeholder="'+esc(optsOrPh||'')+'">'+esc(val||'')+'</textarea>';
+  else inner='<input id="'+id+'" type="'+type+'" placeholder="'+esc(optsOrPh||'')+'" value="'+esc(val||'')+'">';
+  return '<div class="field"><label>'+label+'</label>'+inner+'</div>';
+}
+
+function closeAddBg(e){if(e.target===document.getElementById('add-wrap'))closeAdd();}
+function closeDetailBg(e){if(e.target===document.getElementById('detail-wrap'))closeDetail();}
+function closeAdd(){var m=document.getElementById('add-wrap');if(m)m.remove();}
+function closeDetail(){var m=document.getElementById('detail-wrap');if(m)m.remove();}
+function closeAny(){var m=document.querySelector('.modal-wrap');if(m)m.remove();}
+
+// ── SAVE DEAL ──
+async function saveDeal(eid){
+  var b1f=gv('af-b1f'),b1l=gv('af-b1l');
+  var b1Name=[b1f,b1l].filter(Boolean).join(' ');
+  if(!b1Name){alert('Please enter the borrower\'s first or last name.');document.getElementById('af-b1f').focus();return;}
+  var b2f=gv('af-b2f'),b2l=gv('af-b2l');
+  var b2Name=[b2f,b2l].filter(Boolean).join(' ');
+  var pStreet=gv('af-pstreet'),pCity=gv('af-pcity'),pPost=gv('af-ppostal');
+  var property=[pStreet,pCity,pPost].filter(Boolean).join(', ');
+  var deal={
+    id:eid||uid(), name:b1Name,
+    b1First:b1f, b1Last:b1l, b1Name:b1Name,
+    b1DOB:gv('af-b1dob'), b1Cell:gv('af-b1cell'), b1Email:gv('af-b1email'),
+    b1Employer:gv('af-b1employer'), b1Occ:gv('af-b1occ'),
+    b1Street:pStreet, b1City:pCity, b1Prov:gv('af-b1prov'), b1Postal:gv('af-b1postal'),
+    b2First:b2f, b2Last:b2l, b2Name:b2Name,
+    b2DOB:gv('af-b2dob'), b2Cell:gv('af-b2cell'), b2Email:gv('af-b2email'),
+    b2Employer:gv('af-b2employer'), b2Occ:gv('af-b2occ'),
+    propStreet:gv('af-pstreet'), propCity:gv('af-pcity'), propProv:gv('af-pprov'), propPostal:gv('af-ppostal'),
+    property:property, occupancy:gv('af-occupancy'), propValue:gv('af-propval'),
+    amount:gv('af-amount'), lender:gv('af-lender'), mortType:gv('af-mortType'),
+    rate:gv('af-rate'), intType:gv('af-intType'), term:gv('af-term'), amort:gv('af-amort'),
+    closing:gv('af-closing'), firstPay:gv('af-firstPay'), renewal:gv('af-renewal'),
+    appType:gv('af-appType'), entryDate:gv('af-entryDate'), stage:gv('af-stage')||'Lead',
+    refName:gv('af-refName'), refCompany:gv('af-refCompany'), refType:gv('af-refType'),
+    refEmail:gv('af-refEmail'), refPhone:gv('af-refPhone'), initNotes:gv('af-notes')
+  };
+  var btn=document.getElementById('save-btn');
+  if(btn){btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Saving...';}
+  try{
+    if(eid){
+      await dbUpdateDeal(deal);
+      var idx=deals.findIndex(function(x){return x.id===eid;});
+      if(idx>=0)deals[idx]=deal;
+      // Save note if notes field has content and it's a new note (we check by adding it)
+      var noteText=gv('af-notes');
+      toast('Deal updated successfully');
+    } else {
+      await dbInsertDeal(deal);
+      deals.unshift(deal);
+      if(gv('af-notes')){
+        await dbInsertNote(deal.id, new Date().toLocaleDateString('en-CA'), gv('af-notes'));
+      }
+      toast('Deal added successfully');
+    }
+    closeAdd();
+    render();
+  }catch(e){
+    toast('Error saving deal: '+e.message, true);
+    if(btn){btn.disabled=false;btn.innerHTML=(eid?'💾 Save Changes':'✅ Add Deal');}
+  }
+}
+
+// ── DELETE DEAL ──
+async function deleteDeal(id){
+  var d=deals.find(function(x){return x.id===id;});
+  if(!d)return;
+  if(!confirm('Delete deal for '+d.name+'?\n\nThis will permanently remove the deal and all its notes. This cannot be undone.'))return;
+  showLoading('Deleting deal...');
+  try{
+    await dbDeleteDeal(id);
+    deals=deals.filter(function(x){return x.id!==id;});
+    closeAny();
+    render();
+    toast('Deal deleted');
+  }catch(e){
+    toast('Error deleting deal: '+e.message, true);
+  }finally{hideLoading();}
+}
+
+// ── OPEN DEAL DETAIL ──
+async function openDeal(id){
+  var d=deals.find(function(x){return x.id===id;});if(!d)return;
+  var ac=avc(d.name);var si=stageIdx(d.stage);
+  var stageOpts=STAGES.map(function(s){return '<option value="'+esc(s)+'"'+(s===d.stage?' selected':'')+'>'+esc(s)+'</option>';}).join('');
+  // Load notes from DB
+  var savedNotes=[];
+  try{
+    var rows=await dbGetNotes(id);
+    savedNotes=rows;
+  }catch(e){}
+  closeAny();
+  var h='<div class="modal-wrap" id="detail-wrap" onclick="closeDetailBg(event)">'
+    +'<div class="modal" style="width:620px">'
+    +'<div class="mhdr" style="background:linear-gradient(135deg,'+SBG[si]+'ee,'+SBG[si]+');padding:18px 22px">'
+    +'<div style="display:flex;align-items:center;gap:14px">'
+    +'<div class="av" style="width:52px;height:52px;font-size:18px;background:'+ac[0]+';color:'+ac[1]+';border:3px solid rgba(255,255,255,.8);box-shadow:var(--sh-md)">'+ini(d.name)+'</div>'
+    +'<div><div style="font-size:18px;font-weight:800;color:'+SFG[si]+';letter-spacing:-.02em">'+esc(d.name)+'</div>'
+    +(d.b2Name?'<div style="font-size:12px;color:'+SFG[si]+';opacity:.7">Co-borrower: '+esc(d.b2Name)+'</div>':'')
+    +'<div style="font-size:11px;color:'+SFG[si]+';opacity:.5;margin-top:2px">'+esc(d.id)+(d.entryDate?' · '+d.entryDate:'')+'</div></div></div>'
+    +'<div style="display:flex;gap:8px;flex-shrink:0">'
+    +'<button class="btn" style="background:rgba(255,255,255,.85);border-color:rgba(0,0,0,.1);font-size:12px" onclick="showForm(\''+esc(id)+'\')">✏️ Edit</button>'
+    +'<button class="btn btn-d" style="font-size:12px" onclick="deleteDeal(\''+esc(id)+'\')">🗑 Delete</button>'
+    +'<button class="btn" style="background:rgba(255,255,255,.85);border-color:rgba(0,0,0,.1);font-size:12px" onclick="closeDetail()">✕</button>'
+    +'</div></div>'
+    +'<div style="padding:12px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--bg)">'
+    +'<span style="font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.05em">Stage:</span>'
+    +'<select style="padding:7px 12px;border-radius:var(--rad);border:1px solid var(--border2);font-size:13px;background:var(--bg2);font-family:inherit;font-weight:500" onchange="setStage(\''+id+'\',this.value)">'+stageOpts+'</select>'
+    +'<span class="badge" style="background:'+SBG[si]+';color:'+SFG[si]+'">'+esc(d.stage)+'</span>'
+    +'</div>'
+    +'<div style="padding:0 24px 24px;overflow-y:auto;max-height:60vh">'
+    +'<div class="sec-t">👤 Primary Borrower</div>'
+    +'<div class="igrid">'
+    +ic('Email',d.b1Email?'<a href="mailto:'+d.b1Email+'">'+esc(d.b1Email)+'</a>':'—')
+    +ic('Cell / Phone',esc(d.b1Cell||'—'))
+    +ic('Date of Birth',esc(d.b1DOB||'—'))
+    +ic('Employer',esc(d.b1Employer||'—'))
+    +ic('Occupation',esc(d.b1Occ||'—'))
+    +ic('Address',esc([d.b1Street,d.b1City,d.b1Prov,d.b1Postal].filter(Boolean).join(', ')||'—'))
+    +'</div>';
+  if(d.b2Name){
+    h+='<div class="sec-t">👥 Co-Borrower — '+esc(d.b2Name)+'</div><div class="igrid">'
+      +ic('Email',d.b2Email?'<a href="mailto:'+d.b2Email+'">'+esc(d.b2Email)+'</a>':'—')
+      +ic('Cell / Phone',esc(d.b2Cell||'—'))
+      +ic('Date of Birth',esc(d.b2DOB||'—'))
+      +ic('Employer',esc(d.b2Employer||'—'))
+      +'</div>';
+  }
+  var n=daysUntil(d.renewal);
+  h+='<div class="sec-t">🏠 Subject Property</div><div class="igrid">'
+    +ic('Address',esc(d.property||'—'))+ic('Province',esc(d.propProv||'—'))+ic('Occupancy',esc(d.occupancy||'—'))+ic('Property Value',fmtAmt(d.propValue))+'</div>'
+    +'<div class="sec-t">💰 Mortgage Details</div><div class="igrid">'
+    +ic('Amount',fmtAmt(d.amount))+ic('Lender',esc(d.lender||'—'))
+    +ic('Rate',d.rate?d.rate+'%':'—')+ic('Rate Type',esc(d.intType||'—'))
+    +ic('Term',d.term?d.term+' months':'—')+ic('Amortization',d.amort?d.amort+' months':'—')
+    +ic('Mortgage Type',esc(d.mortType||'—'))+ic('App Type',esc(d.appType||'—'))
+    +ic('Closing Date',esc(d.closing||'—'))+ic('First Payment',esc(d.firstPay||'—'))
+    +ic('Maturity Date',d.renewal?d.renewal+(n!==null?' <span class="rpill '+rpCls(d.renewal)+'" style="font-size:10px">'+n+'d</span>':''):'—')
+    +'</div>';
+  if(d.refName){
+    h+='<div class="sec-t">🤝 Referral Partner</div><div class="igrid">'
+      +ic('Partner Name',esc(d.refName))+ic('Company',esc(d.refCompany||'—'))
+      +ic('Partner Type',esc(d.refType||'—'))+ic('Email',d.refEmail?'<a href="mailto:'+d.refEmail+'">'+esc(d.refEmail)+'</a>':'—')
+      +ic('Phone',esc(d.refPhone||'—'))+'</div>';
+  }
+  h+='<div class="sec-t">📝 Notes & Activity Log</div>'
+    +'<div style="margin-bottom:12px">'
+    +(!savedNotes.length?'<div style="font-size:13px;color:var(--text2);padding:12px;background:var(--bg2);border-radius:var(--rad)">No notes yet — log a call, email, or update below.</div>'
+      :savedNotes.map(function(nn){return '<div class="nentry"><div class="ndot"></div><div><strong style="color:var(--text)">'+esc(nn.note_date)+'</strong> — '+esc(nn.note_text)+'</div></div>';}).join(''))
+    +'</div>'
+    +'<textarea class="note-area" id="nt-'+id+'" rows="2" placeholder="Log a call, email sent, condition cleared, document received..."></textarea>'
+    +'<div style="display:flex;gap:8px;margin-top:10px">'
+    +'<button class="btn btn-p" id="note-btn-'+id+'" onclick="addNote(\''+id+'\')">💾 Save Note</button>'
+    +'<button class="btn" onclick="closeDetail()">Close</button>'
+    +'<button class="btn btn-d" style="margin-left:auto" onclick="deleteDeal(\''+esc(id)+'\')">🗑 Delete Deal</button>'
+    +'</div></div></div></div>';
+  document.body.insertAdjacentHTML('beforeend',h);
+}
+
+function ic(label,val){return '<div class="icell"><div class="ilbl">'+label+'</div><div class="ival">'+val+'</div></div>';}
+
+// ── SET STAGE ──
+async function setStage(id,stage){
+  var d=deals.find(function(x){return x.id===id;});if(!d)return;
+  var oldStage=d.stage;
+  d.stage=stage;
+  try{
+    await dbUpdateStage(id,stage);
+    render();
+    toast('Stage updated to '+stage);
+  }catch(e){
+    d.stage=oldStage;
+    toast('Error updating stage: '+e.message, true);
+  }
+}
+
+// ── ADD NOTE ──
+async function addNote(id){
+  var ta=document.getElementById('nt-'+id);
+  if(!ta||!ta.value.trim())return;
+  var text=ta.value.trim();
+  var noteDate=new Date().toLocaleDateString('en-CA');
+  var btn=document.getElementById('note-btn-'+id);
+  if(btn){btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Saving...';}
+  try{
+    await dbInsertNote(id,noteDate,text);
+    toast('Note saved');
+    closeDetail();
+    openDeal(id);
+  }catch(e){
+    toast('Error saving note: '+e.message, true);
+    if(btn){btn.disabled=false;btn.innerHTML='💾 Save Note';}
+  }
+}
+
+// ── IMPORT ──
+async function onImport(input){
+  var file=input.files[0];if(!file)return;
+  var reader=new FileReader();
+  reader.onload=async function(e){
+    var parsed=parseFilogix(e.target.result);
+    if(!parsed.length){alert('No records found. Make sure this is a Filogix Expert CSV export.');return;}
+    showLoading('Importing '+parsed.length+' records...');
+    var added=0,updated=0;
+    try{
+      for(var i=0;i<parsed.length;i++){
+        var p=parsed[i];
+        var existing=deals.find(function(x){return x.id===p.id;});
+        if(existing){
+          var merged=Object.assign({},existing,p,{stage:existing.stage});
+          await dbUpdateDeal(merged);
+          var idx=deals.findIndex(function(x){return x.id===p.id;});
+          if(idx>=0)deals[idx]=merged;
+          updated++;
+        } else {
+          await dbInsertDeal(p);
+          deals.unshift(p);
+          added++;
+        }
+      }
+      render();
+      toast(added+' added, '+updated+' updated');
+    }catch(e){
+      toast('Import error: '+e.message,true);
+    }finally{hideLoading();}
+  };
+  reader.readAsText(file);input.value='';
+}
+
+function splitCSV(line){var r=[],cur='',q=false;for(var i=0;i<line.length;i++){var c=line[i];if(c==='"'){q=!q;}else if(c===','&&!q){r.push(cur);cur='';}else cur+=c;}r.push(cur);return r;}
+function parseFilogix(text){
+  var lines=text.trim().split(/\r?\n/);if(lines.length<2)return[];
+  var hdrs=splitCSV(lines[0]).map(function(h){return h.replace(/^"|"$/g,'').trim();});
+  function gc(c,n){var i=hdrs.indexOf(n);return i>=0?(c[i]||'').trim():'';}
+  return lines.slice(1).filter(function(l){return l.trim();}).map(function(line){
+    var c=splitCSV(line);function g(n){return gc(c,n);}
+    var id=g('M_1Application_Id')||g('M_1Loan_Code')||uid();
+    var b1f=(g('B1_Borrower_First_Name')||'').trim(),b1l=(g('B1_Borrower_Last_Name')||'').trim();
+    var b2f=(g('B2_Borrower_First_Name')||'').trim(),b2l=(g('B2_Borrower_Last_Name')||'').trim();
+    var b1Name=[b1f,b1l].filter(Boolean).join(' ');
+    var b2Name=[b2f,b2l].filter(Boolean).join(' ');
+    var pNum=g('P1_Property_Street_Number'),pUnit=g('P1_Property_Unit_Number');
+    var street=[pUnit?pUnit+'-'+pNum:pNum,g('P1_Property_Street_Name'),g('P1_Property_Street_Type'),g('P1_Property_Street_Direction')].filter(Boolean).join(' ');
+    var pCity=g('P1_Property_City'),pPost=g('P1_Property_Postal');
+    var property=[street,pCity,pPost].filter(Boolean).join(', ');
+    var status=g('D1Deal_Status')||g('M1Status')||'Lead';
+    return{
+      id:id,name:b1Name||'Unknown',b1First:b1f,b1Last:b1l,b1Name:b1Name,
+      b1DOB:g('B1_Borrower_Birth_Date'),b1Cell:g('B1_Borrower_Cell_Phone')||g('B1_Borrower_Home_Phone')||g('B1_Borrower_Work_Phone'),
+      b1Email:g('B1_Borrower_Email_Address'),b1Employer:g('B1_Borrower_Employer'),b1Occ:g('B1_Borrower_Occupation'),
+      b1Street:street,b1City:g('B1_Borrower_City'),b1Prov:g('B1_Borrower_Province'),b1Postal:g('B1_Borrower_Postal'),
+      b2First:b2f,b2Last:b2l,b2Name:b2Name,
+      b2DOB:g('B2_Borrower_Birth_Date'),b2Cell:g('B2_Borrower_Cell_Phone')||g('B2_Borrower_Home_Phone'),
+      b2Email:g('B2_Borrower_Email_Address'),b2Employer:g('B2_Borrower_Employer'),b2Occ:g('B2_Borrower_Occupation'),
+      propStreet:street,propCity:pCity,propProv:g('P1_Property_Province'),propPostal:pPost,
+      property:property,occupancy:g('P1_Property_Occupancy'),propValue:'',
+      amount:g('M_1Mortgage_Amount'),lender:g('L1_Lender_Name_Mortgage1'),mortType:g('M_1Mortgage_Type'),
+      rate:g('M_1Rate'),intType:g('M_1Interest_Type'),term:g('M_1Term'),amort:g('M_1Amortization'),
+      closing:g('M_1Closing_Date'),firstPay:g('M_1First_Payment_Date'),renewal:g('M_1Maturity_Date'),
+      appType:g('M_1Application_Type'),entryDate:g('M_1Entry_Date'),
+      stage:(function(s){s=(s||'').toLowerCase().trim();if(s==='in progress')return 'Application Submitted';if(s==='accepted')return 'Conditions Cleared';if(s==='approved')return 'Approved';if(s==='funded')return 'Funded';return 'Lead';})(status),
+      refName:'',refCompany:'',refType:'',refEmail:'',refPhone:''
+    };
+  }).filter(function(d){return d.name&&d.name!=='Unknown';});
+}
+
+// ── EXPORT ──
+function doExport(){
+  if(!deals.length){alert('Nothing to export yet.');return;}
+  var headers=['ID','Borrower','Co-borrower','B1 Email','B1 Phone','B1 DOB','B1 Employer','Property','Amount','Lender','Rate','Rate Type','Term','Amortization','Mortgage Type','App Type','Closing Date','First Payment','Maturity Date','Stage','Entry Date','Ref Partner','Ref Company','Ref Type','Ref Email','Ref Phone'];
+  var rows=deals.map(function(d){return [d.id,d.name,d.b2Name,d.b1Email,d.b1Cell,d.b1DOB,d.b1Employer,d.property,d.amount,d.lender,d.rate,d.intType,d.term,d.amort,d.mortType,d.appType,d.closing,d.firstPay,d.renewal,d.stage,d.entryDate,d.refName,d.refCompany,d.refType,d.refEmail,d.refPhone].map(function(v){return '"'+(v||'').replace(/"/g,'""')+'"';}).join(',');});
+  var csv=[headers.join(',')].concat(rows).join('\n');
+  var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='brokerdesk_'+new Date().toISOString().slice(0,10)+'.csv';a.click();
+  toast('CSV exported');
+}
+
+// ── INIT ──
+loadDeals();
+</script>
+</body>
+</html>
