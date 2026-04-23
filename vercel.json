@@ -11,6 +11,22 @@
     {
       "path": "/api/cron/funded-followup",
       "schedule": "0 9 * * *"
+    },
+    {
+      "path": "/api/cron/birthdays-anniversaries",
+      "schedule": "0 8 * * *"
+    },
+    {
+      "path": "/api/cron/renewal-reminders",
+      "schedule": "0 9 * * *"
+    },
+    {
+      "path": "/api/cron/docs-preapproval",
+      "schedule": "0 8 * * *"
+    },
+    {
+      "path": "/api/cron/year-end-archive",
+      "schedule": "0 0 31 12 *"
     }
   ]
 }
