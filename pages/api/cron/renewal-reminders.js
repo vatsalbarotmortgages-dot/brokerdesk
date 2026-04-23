@@ -1,6 +1,6 @@
 import { Resend } from 'resend'
 import { supabase } from '../../../lib/supabase'
-import { renewalReminderEmail } from '../../../lib/emails_v2'
+import { renewalReminderEmail } from '../../../lib/emails'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
