@@ -112,16 +112,25 @@ function daysToBirthday(dob) {
 function daysToAnniversary(closing) {
   if (!closing) return null
   const today = new Date()
+  today.setHours(0,0,0,0)
   const parts = closing.split('-')
   if (parts.length < 3) return null
-  let next = new Date(today.getFullYear(), parseInt(parts[1])-1, parseInt(parts[2]))
-  if (next < today) next = new Date(today.getFullYear()+1, parseInt(parts[1])-1, parseInt(parts[2]))
-  const days = Math.round((next - today) / 86400000)
   // Only show if it's been at least 1 year since closing
   const closingDate = new Date(closing)
   const yearsSince = (today - closingDate) / (365.25 * 86400000)
   if (yearsSince < 0.9) return null
-  return days
+  // Check this year's anniversary
+  let ann = new Date(today.getFullYear(), parseInt(parts[1])-1, parseInt(parts[2]))
+  ann.setHours(0,0,0,0)
+  const daysThis = Math.round((ann - today) / 86400000)
+  // Show if anniversary is today, upcoming in 30 days, or was in last 2 days
+  if (daysThis >= -2 && daysThis <= 30) return daysThis
+  // Check next year's anniversary if this year's just passed
+  let annNext = new Date(today.getFullYear()+1, parseInt(parts[1])-1, parseInt(parts[2]))
+  annNext.setHours(0,0,0,0)
+  const daysNext = Math.round((annNext - today) / 86400000)
+  if (daysNext <= 30) return daysNext
+  return null
 }
 
 export default function App() {
