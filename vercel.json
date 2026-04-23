@@ -1,0 +1,16 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/partner-emails",
+      "schedule": "0 9 * * 1"
+    },
+    {
+      "path": "/api/cron/stale-deals",
+      "schedule": "0 8 * * *"
+    },
+    {
+      "path": "/api/cron/funded-followup",
+      "schedule": "0 9 * * *"
+    }
+  ]
+}
