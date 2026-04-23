@@ -1261,7 +1261,6 @@ function DealModal({ deal: initialDeal, deals, onSave, onDelete, onClose, onStag
             </div>
             <div className="fsec"><div className="fsec-hdr"><div className="fsec-icon">📋</div><div><div className="fsec-title">Deal Information</div></div></div>
               <div className="fg fg3">
-                <FI key_="stage" label="Stage" type="select-stage"/>
                 <div className="field"><label>Stage</label><select value={form.stage||'Lead'} onChange={e=>setForm(p=>({...p,stage:e.target.value}))}>{STAGES.map(s=><option key={s}>{s}</option>)}</select></div>
                 <div className="field"><label>Application Type</label><select value={form.appType||''} onChange={e=>setForm(p=>({...p,appType:e.target.value}))}><option value="">Select…</option>{ATTYPES.map(s=><option key={s}>{s}</option>)}</select></div>
                 <div className="field"><label>File Date</label><input type="date" value={form.entryDate||''} onChange={e=>setForm(p=>({...p,entryDate:e.target.value}))}/></div>
