@@ -1363,13 +1363,24 @@ function Signature({ settings, saveSettings, sendTestEmail }) {
               {form.sig_photo_url
                 ? <img src={form.sig_photo_url} alt="Signature" style={{width:72,height:72,borderRadius:'50%',objectFit:'cover',border:'3px solid #1e40af'}}/>
                 : <div style={{width:72,height:72,borderRadius:'50%',background:'var(--bg3)',border:'2px dashed var(--border2)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:28}}>👤</div>}
-              <div>
-                <button className="btn" onClick={()=>fileRef.current?.click()} disabled={uploading}>
-                  {uploading?<><span className="spinner"></span> Uploading…</>:'📷 Upload Photo'}
-                </button>
-                {form.sig_photo_url&&<button className="btn btn-d" style={{marginLeft:8,fontSize:12}} onClick={()=>setForm(p=>({...p,sig_photo_url:''}))}>Remove</button>}
-                <input ref={fileRef} type="file" accept="image/*" style={{display:'none'}} onChange={handlePhotoUpload}/>
-                <div style={{fontSize:11,color:'var(--text2)',marginTop:6}}>JPG, PNG, or GIF under 500KB. Appears in all automated emails.</div>
+              <div style={{flex:1}}>
+                <div style={{display:'flex',gap:8,flexWrap:'wrap',marginBottom:8}}>
+                  <button className="btn" onClick={()=>fileRef.current?.click()} disabled={uploading}>
+                    {uploading?<><span className="spinner"></span> Uploading…</>:'📷 Upload Photo'}
+                  </button>
+                  {form.sig_photo_url&&<button className="btn btn-d" style={{fontSize:12}} onClick={()=>setForm(p=>({...p,sig_photo_url:''}))}>Remove</button>}
+                  <input ref={fileRef} type="file" accept="image/*" style={{display:'none'}} onChange={handlePhotoUpload}/>
+                </div>
+                <div style={{fontSize:11,color:'var(--text2)',marginBottom:8}}>JPG or PNG under 500KB — or paste a public image URL below (recommended for email compatibility)</div>
+                <input type="text" 
+                  placeholder="Or paste image URL e.g. https://i.imgur.com/abc123.jpg"
+                  value={form.sig_photo_url&&form.sig_photo_url.startsWith('http')?form.sig_photo_url:''}
+                  onChange={e=>setForm(p=>({...p,sig_photo_url:e.target.value}))}
+                  style={{width:'100%',padding:'8px 12px',borderRadius:'var(--rad)',border:'1px solid var(--border2)',fontSize:12,fontFamily:'inherit',color:'var(--text)'}}
+                />
+                <div style={{fontSize:11,color:'var(--text2)',marginTop:6}}>
+                  <strong>Tip:</strong> Upload to <a href="https://imgur.com" target="_blank" style={{color:'var(--brand)'}}>imgur.com</a>, right-click the image → Copy image address, paste above.
+                </div>
               </div>
             </div>
           </div>
