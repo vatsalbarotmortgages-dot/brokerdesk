@@ -1159,20 +1159,24 @@ Vatsal Barot | Associate Mortgage Broker`
   })
 
   upcoming.sort((a,b) => a.sendDate - b.sendDate)
-  const next30 = upcoming.filter(e => (e.sendDate - now) / 86400000 <= 30)
+  // Show emails sending in next 60 days (including today and yesterday for timing buffer)
+  const next60 = upcoming.filter(e => {
+    const daysAway = (e.sendDate - now) / 86400000
+    return daysAway >= -1 && daysAway <= 60
+  })
 
   return (
     <div style={{maxWidth:700}}>
       <div className="panel" style={{marginBottom:20}}>
-        <h3 style={{marginBottom:4}}>📅 Upcoming Emails — Next 30 Days</h3>
+        <h3 style={{marginBottom:4}}>📅 Upcoming Emails — Next 60 Days</h3>
         <p style={{fontSize:13,color:'var(--text2)',marginBottom:20}}>Automated emails scheduled to go out based on your current deals. These send automatically — no action needed.</p>
-        {!next30.length ? (
+        {!next60.length ? (
           <div style={{textAlign:'center',padding:40,color:'var(--text2)',fontSize:13}}>
             <div style={{fontSize:32,marginBottom:12}}>✉️</div>
-            No emails scheduled in the next 30 days. Add deals with renewal dates, closing dates, and email addresses to see the schedule here.
+            No emails scheduled in the next 60 days. Add deals with renewal dates, closing dates, and email addresses to see the schedule here.
           </div>
         ) : (
-          next30.map((e,i) => {
+          next60.map((e,i) => {
             const info = EMAIL_LABELS[e.type] || {label:e.type,color:'#6b7280',bg:'#f9fafb'}
             const basePrev = EMAIL_PREVIEWS[e.type] || {subject:'Automated email',body:'This email will be sent automatically based on your deal data.'}
             const prev = savedEdits[e.type] || basePrev
