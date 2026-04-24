@@ -1024,7 +1024,7 @@ Warm regards,
 Vatsal Barot | Associate Mortgage Broker`
     },
     'renewal_60': {
-      subject: 'Your mortgage renewal is coming — let's get ahead of it',
+      subject: "Your mortgage renewal is coming — let's get ahead of it",
       body: `Hi [Client],
 
 I wanted to follow up and make sure your mortgage renewal is on your radar. The best rates and options are typically secured well before the renewal date — and now is the ideal time to start that conversation.
@@ -1092,7 +1092,7 @@ Warm regards,
 Vatsal Barot | Associate Mortgage Broker`
     },
     'docs_followup_1_Documents_Received': {
-      subject: 'Checking in — how is the house hunting going?',
+      subject: "Checking in — how is the house hunting going?",
       body: `Hi [Client],
 
 I just wanted to check in and see how the house hunting is going! Finding the right home takes time and I want to make sure you feel fully supported throughout the process.
@@ -1105,7 +1105,7 @@ Warm regards,
 Vatsal Barot | Associate Mortgage Broker`
     },
     'docs_followup_2_Documents_Received': {
-      subject: 'Let's connect — when works for you?',
+      subject: "Let's connect — when works for you?",
       body: `Hi [Client],
 
 I hope your search is going well! I wanted to reach out and see if we could find some time to connect — even just for a quick call to make sure everything is lined up on the mortgage side.
