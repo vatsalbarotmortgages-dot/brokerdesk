@@ -984,6 +984,9 @@ function Referrals({ deals, refFilter, setRefFilter, refSort, setRefSort, setMod
 
 // ── EMAIL SCHEDULE ──
 function EmailSchedule({ deals, emailLog }) {
+  const [preview, setPreview] = useState(null) // {subject, html, dealName, type}
+  const [editItem, setEditItem] = useState(null) // {item, subject, body}
+
   const EMAIL_LABELS = {
     'partner_biweekly': {label:'Partner Status Update',color:'#2563eb',bg:'#eff6ff'},
     'coffee_invite': {label:'Coffee Invite',color:'#d97706',bg:'#fffbeb'},
@@ -998,6 +1001,122 @@ function EmailSchedule({ deals, emailLog }) {
     'docs_followup_2_Documents_Received': {label:'Docs Received - Day 21',color:'#0891b2',bg:'#ecfeff'},
     'docs_followup_1_Pre-Approval': {label:'Pre-Approval - Day 7',color:'#3b82f6',bg:'#eff6ff'},
     'docs_followup_2_Pre-Approval': {label:'Pre-Approval - Day 21',color:'#3b82f6',bg:'#eff6ff'},
+  }
+
+  const EMAIL_PREVIEWS = {
+    'renewal_90': {
+      subject: 'Important: Your mortgage renewal is approaching',
+      body: `Hi [Client],
+
+I hope you're doing well! I'm reaching out because your mortgage renewal period is coming up, and I wanted to make sure you're aware of the importance of planning ahead.
+
+Many homeowners don't realize that the renewal letter their lender sends is often not the best offer available — and simply signing it without reviewing your options could mean leaving thousands of dollars on the table.
+
+Why work with me for your renewal?
+✅ I shop multiple lenders on your behalf — not just one
+✅ No cost to you — lenders pay my fee
+✅ I negotiate to get you the best rate and terms
+✅ I handle all the paperwork so renewal is seamless
+
+I'd love to connect and walk you through your options. Please reach out at your earliest convenience.
+
+Warm regards,
+Vatsal Barot | Associate Mortgage Broker`
+    },
+    'renewal_60': {
+      subject: 'Your mortgage renewal is coming — let's get ahead of it',
+      body: `Hi [Client],
+
+I wanted to follow up and make sure your mortgage renewal is on your radar. The best rates and options are typically secured well before the renewal date — and now is the ideal time to start that conversation.
+
+Don't wait until the last minute — lenders often require several weeks to process renewals. Starting now gives us the best chance to secure the most competitive terms for you.
+
+I'd love to set up a quick call or meeting at your convenience. There's absolutely no obligation — just a free, honest conversation about what's best for you.
+
+Please reach out when you're ready!
+
+Warm regards,
+Vatsal Barot | Associate Mortgage Broker`
+    },
+    'renewal_30': {
+      subject: 'URGENT: Your mortgage renewal requires immediate attention',
+      body: `Hi [Client],
+
+I'm reaching out because your mortgage renewal is approaching very soon and I want to make absolutely sure you don't miss this critical window.
+
+If you simply accept your lender's renewal offer without reviewing your options, you could be locked into a rate that is not competitive for the next several years. A few minutes with me could save you thousands.
+
+Please contact me as soon as possible so we can review your options and ensure you're making the most informed decision about your largest financial asset.
+
+I'm here to help — let's talk soon.
+
+Vatsal Barot | Associate Mortgage Broker`
+    },
+    'funded_30': {
+      subject: 'Checking in — how are you settling in?',
+      body: `Hi [Client],
+
+I hope you're settling into your new home and that the move went smoothly! It's been about a month since everything finalized and I just wanted to check in.
+
+If you have any questions about your mortgage, payments, or anything at all, please don't hesitate to reach out — I'm always here to help.
+
+Wishing you all the best in your new home!
+
+Warm regards,
+Vatsal Barot | Associate Mortgage Broker`
+    },
+    'funded_60': {
+      subject: 'Thinking of you — a quick hello',
+      body: `Hi [Client],
+
+I hope you're enjoying your home! I was thinking of you and wanted to touch base to see how things are going a couple of months in.
+
+If you know anyone looking to buy a home, refinance, or renew their mortgage, I would truly appreciate the referral.
+
+As always, I'm just a call or email away!
+
+Warm regards,
+Vatsal Barot | Associate Mortgage Broker`
+    },
+    'funded_90': {
+      subject: '3 months in — your mortgage, your future',
+      body: `Hi [Client],
+
+Congratulations — it's been 3 months since your mortgage finalized!
+
+As your mortgage term progresses, it's always a good idea to stay informed about your options. When your renewal approaches, I'll be reaching out well in advance to make sure you get the best possible rate and terms.
+
+In the meantime, if you have any questions or know someone who could use my help, I'm always here for you.
+
+Warm regards,
+Vatsal Barot | Associate Mortgage Broker`
+    },
+    'docs_followup_1_Documents_Received': {
+      subject: 'Checking in — how is the house hunting going?',
+      body: `Hi [Client],
+
+I just wanted to check in and see how the house hunting is going! Finding the right home takes time and I want to make sure you feel fully supported throughout the process.
+
+If you've found a property you love, or if you have any questions about your mortgage options — I'm just a call or email away.
+
+Wishing you the best of luck in your search!
+
+Warm regards,
+Vatsal Barot | Associate Mortgage Broker`
+    },
+    'docs_followup_2_Documents_Received': {
+      subject: 'Let's connect — when works for you?',
+      body: `Hi [Client],
+
+I hope your search is going well! I wanted to reach out and see if we could find some time to connect — even just for a quick call to make sure everything is lined up on the mortgage side.
+
+Would you have some free time this week or next? Just reply to this email or give me a call.
+
+Looking forward to hearing from you!
+
+Warm regards,
+Vatsal Barot | Associate Mortgage Broker`
+    },
   }
   // Build upcoming email schedule based on deals
   const upcoming = []
@@ -1054,19 +1173,32 @@ function EmailSchedule({ deals, emailLog }) {
         ) : (
           next30.map((e,i) => {
             const info = EMAIL_LABELS[e.type] || {label:e.type,color:'#6b7280',bg:'#f9fafb'}
+            const prev = EMAIL_PREVIEWS[e.type] || {subject:'Automated email',body:'This email will be sent automatically based on your deal data.'}
             const daysAway = Math.round((e.sendDate - now) / 86400000)
             return (
-              <div key={i} className="email-sched-row">
-                <div style={{flexShrink:0,textAlign:'center',minWidth:48}}>
-                  <div style={{fontSize:16,fontWeight:800,color:'var(--brand)'}}>{daysAway}</div>
-                  <div style={{fontSize:10,color:'var(--text3)'}}>days</div>
+              <div key={i} className="email-sched-row" style={{flexDirection:'column',gap:8,alignItems:'stretch'}}>
+                <div style={{display:'flex',alignItems:'center',gap:12}}>
+                  <div style={{flexShrink:0,textAlign:'center',minWidth:48}}>
+                    <div style={{fontSize:16,fontWeight:800,color:daysAway<=7?'#dc2626':'var(--brand)'}}>{daysAway===0?'Today':daysAway}</div>
+                    <div style={{fontSize:10,color:'var(--text3)'}}>{daysAway===0?'':'days'}</div>
+                  </div>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{fontSize:13,fontWeight:700}}>{e.dealName}</div>
+                    <div style={{fontSize:11,color:'var(--text2)',marginTop:2}}>To: {e.recipient}</div>
+                    <div style={{fontSize:11,color:'var(--text2)'}}>{e.sendDate.toLocaleDateString('en-CA')}</div>
+                  </div>
+                  <span className="email-type-pill" style={{background:info.bg,color:info.color,border:`1px solid ${info.color}33`,flexShrink:0}}>{info.label}</span>
                 </div>
-                <div style={{flex:1,minWidth:0}}>
-                  <div style={{fontSize:13,fontWeight:700}}>{e.dealName}</div>
-                  <div style={{fontSize:11,color:'var(--text2)',marginTop:2}}>To: {e.recipient}</div>
-                  <div style={{fontSize:11,color:'var(--text2)'}}>{e.sendDate.toLocaleDateString('en-CA')}</div>
+                <div style={{display:'flex',gap:8,paddingLeft:60}}>
+                  <button className="btn" style={{fontSize:11,padding:'4px 12px'}}
+                    onClick={()=>setPreview({subject:prev.subject,body:prev.body,dealName:e.dealName,type:info.label,sendDate:e.sendDate.toLocaleDateString('en-CA'),recipient:e.recipient})}>
+                    👁 Preview
+                  </button>
+                  <button className="btn" style={{fontSize:11,padding:'4px 12px'}}
+                    onClick={()=>setEditItem({...e,subject:prev.subject,body:prev.body,info})}>
+                    ✏️ Edit Email
+                  </button>
                 </div>
-                <span className="email-type-pill" style={{background:info.bg,color:info.color,border:`1px solid ${info.color}33`}}>{info.label}</span>
               </div>
             )
           })
@@ -1098,6 +1230,67 @@ function EmailSchedule({ deals, emailLog }) {
         )}
       </div>
     </div>
+
+    {/* PREVIEW MODAL */}
+    {preview && (
+      <div style={{position:'fixed',inset:0,background:'rgba(15,23,42,.7)',display:'flex',alignItems:'flex-start',justifyContent:'center',zIndex:300,padding:'24px 12px',overflowY:'auto',backdropFilter:'blur(4px)'}}
+        onClick={e=>e.target===e.currentTarget&&setPreview(null)}>
+        <div style={{background:'var(--bg)',borderRadius:'var(--rad-xl)',width:640,maxWidth:'98vw',border:'1px solid var(--border)',boxShadow:'var(--sh-lg)',overflow:'hidden'}}>
+          <div style={{background:'linear-gradient(135deg,#0f172a,#1e3a5f)',padding:'18px 24px',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+            <div>
+              <div style={{fontSize:15,fontWeight:700,color:'#fff'}}>👁 Email Preview</div>
+              <div style={{fontSize:12,color:'rgba(255,255,255,.5)',marginTop:2}}>{preview.type} · Sends {preview.sendDate}</div>
+            </div>
+            <button className="btn" style={{background:'rgba(255,255,255,.15)',color:'#fff',borderColor:'rgba(255,255,255,.2)'}} onClick={()=>setPreview(null)}>✕ Close</button>
+          </div>
+          <div style={{padding:'20px 24px',borderBottom:'1px solid var(--border)',background:'var(--bg2)'}}>
+            <div style={{fontSize:11,fontWeight:700,color:'var(--text2)',textTransform:'uppercase',letterSpacing:'.05em',marginBottom:4}}>To</div>
+            <div style={{fontSize:13}}>{preview.recipient} ({preview.dealName})</div>
+            <div style={{fontSize:11,fontWeight:700,color:'var(--text2)',textTransform:'uppercase',letterSpacing:'.05em',marginBottom:4,marginTop:12}}>Subject</div>
+            <div style={{fontSize:14,fontWeight:700}}>{preview.subject}</div>
+          </div>
+          <div style={{padding:'20px 24px',maxHeight:'50vh',overflowY:'auto'}}>
+            <div style={{fontSize:13,lineHeight:1.8,color:'var(--text)',whiteSpace:'pre-wrap'}}>{preview.body}</div>
+          </div>
+          <div style={{padding:'14px 24px',borderTop:'1px solid var(--border)',background:'var(--bg2)',display:'flex',justifyContent:'flex-end'}}>
+            <button className="btn" onClick={()=>setPreview(null)}>Close</button>
+          </div>
+        </div>
+      </div>
+    )}
+
+    {/* EDIT MODAL */}
+    {editItem && (
+      <div style={{position:'fixed',inset:0,background:'rgba(15,23,42,.7)',display:'flex',alignItems:'flex-start',justifyContent:'center',zIndex:300,padding:'24px 12px',overflowY:'auto',backdropFilter:'blur(4px)'}}
+        onClick={e=>e.target===e.currentTarget&&setEditItem(null)}>
+        <div style={{background:'var(--bg)',borderRadius:'var(--rad-xl)',width:640,maxWidth:'98vw',border:'1px solid var(--border)',boxShadow:'var(--sh-lg)',overflow:'hidden'}}>
+          <div style={{background:'linear-gradient(135deg,#0f172a,#1e3a5f)',padding:'18px 24px',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+            <div>
+              <div style={{fontSize:15,fontWeight:700,color:'#fff'}}>✏️ Edit Email</div>
+              <div style={{fontSize:12,color:'rgba(255,255,255,.5)',marginTop:2}}>{editItem.dealName} · {editItem.sendDate?.toLocaleDateString('en-CA')}</div>
+            </div>
+            <button className="btn" style={{background:'rgba(255,255,255,.15)',color:'#fff',borderColor:'rgba(255,255,255,.2)'}} onClick={()=>setEditItem(null)}>✕ Close</button>
+          </div>
+          <div style={{padding:'20px 24px'}}>
+            <div style={{marginBottom:14}}>
+              <div style={{fontSize:11,fontWeight:700,color:'var(--text2)',textTransform:'uppercase',letterSpacing:'.05em',marginBottom:6}}>Subject Line</div>
+              <input type="text" style={{width:'100%',padding:'9px 12px',borderRadius:'var(--rad)',border:'1px solid var(--border2)',fontSize:13,fontFamily:'inherit'}}
+                value={editItem.subject} onChange={e=>setEditItem(p=>({...p,subject:e.target.value}))}/>
+            </div>
+            <div>
+              <div style={{fontSize:11,fontWeight:700,color:'var(--text2)',textTransform:'uppercase',letterSpacing:'.05em',marginBottom:6}}>Email Body</div>
+              <textarea style={{width:'100%',padding:'10px 12px',borderRadius:'var(--rad)',border:'1px solid var(--border2)',fontSize:13,fontFamily:'inherit',lineHeight:1.7,resize:'vertical',minHeight:280}}
+                value={editItem.body} onChange={e=>setEditItem(p=>({...p,body:e.target.value}))}/>
+            </div>
+            <div style={{fontSize:11,color:'var(--text2)',marginTop:8}}>Note: Changes here are for reference only — to permanently change email templates, contact your developer.</div>
+          </div>
+          <div style={{padding:'14px 24px',borderTop:'1px solid var(--border)',background:'var(--bg2)',display:'flex',gap:10}}>
+            <button className="btn btn-s" onClick={()=>{setPreview({subject:editItem.subject,body:editItem.body,dealName:editItem.dealName,type:editItem.info?.label,sendDate:editItem.sendDate?.toLocaleDateString('en-CA'),recipient:editItem.recipient});setEditItem(null)}}>👁 Preview Changes</button>
+            <button className="btn" onClick={()=>setEditItem(null)}>Close</button>
+          </div>
+        </div>
+      </div>
+    )}
   )
 }
 
