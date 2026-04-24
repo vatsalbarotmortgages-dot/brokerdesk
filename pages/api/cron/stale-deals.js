@@ -4,6 +4,13 @@ import { staleDealEmail } from '../../../lib/emails'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
+// Only these stages trigger stale deal reminders to Vatsal
+const STALE_STAGES = {
+  'Info Only / No Deal': { intervalDays: 4, maxEmails: 7 },
+  'Pre-Approval': { intervalDays: 4, maxEmails: 7 }
+}
+// Check In and Old Files — Funded are intentionally excluded
+
 export default async function handler(req, res) {
   if (req.headers.authorization !== `Bearer ${process.env.CRON_SECRET}`) {
     return res.status(401).json({ error: 'Unauthorized' })
@@ -19,23 +26,15 @@ export default async function handler(req, res) {
     phone: settings.sig_phone || '',
     brokerLicense: settings.sig_broker_license || '#30005730',
     brokerageLicense: settings.sig_brokerage_license || '#3000168',
-    tagline: settings.sig_tagline || ''
-  }
-
-  const staleConfig = {
-    'Info Only / No Deal': { intervalDays: 4, maxEmails: 7 },
-    'Pre-Approval': { intervalDays: 4, maxEmails: 7 }
+    tagline: settings.sig_tagline || '',
+    photoUrl: settings.sig_photo_url || ''
   }
 
   const now = new Date()
   let sent = 0
 
-  for (const [stage, config] of Object.entries(staleConfig)) {
-    const { data: deals } = await supabase
-      .from('deals')
-      .select('*')
-      .eq('stage', stage)
-
+  for (const [stage, config] of Object.entries(STALE_STAGES)) {
+    const { data: deals } = await supabase.from('deals').select('*').eq('stage', stage)
     if (!deals?.length) continue
 
     for (const deal of deals) {
@@ -51,25 +50,16 @@ export default async function handler(req, res) {
       const lastLog = logs?.[0]?.sent_at ? new Date(logs[0].sent_at) : null
       const dealDate = new Date(deal.updated_at || deal.created_at)
       const daysSinceUpdate = Math.floor((now - dealDate) / 86400000)
-      const daysSinceLastEmail = lastLog
-        ? Math.floor((now - lastLog) / 86400000)
-        : daysSinceUpdate
+      const daysSinceLastEmail = lastLog ? Math.floor((now - lastLog) / 86400000) : daysSinceUpdate
 
       if (daysSinceLastEmail >= config.intervalDays && daysSinceUpdate >= config.intervalDays) {
-        const emailContent = staleDealEmail({
-          dealName: deal.name,
-          stage: deal.stage,
-          daysSinceUpdate,
-          sig
-        })
-
+        const emailContent = staleDealEmail({ dealName: deal.name, stage: deal.stage, daysSinceUpdate, sig })
         await resend.emails.send({
           from: `BrokerDesk <${sig.email}>`,
           to: [sig.email],
           subject: emailContent.subject,
           html: emailContent.html
         })
-
         await supabase.from('email_log').insert({
           deal_id: deal.id,
           email_type: 'stale_deal',
