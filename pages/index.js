@@ -202,6 +202,7 @@ export default function App() {
   const [tasks, setTasks] = useState([])
   const [settings, setSettings] = useState({})
   const [emailLog, setEmailLog] = useState([])
+  const [trash, setTrash] = useState([])
   const [tab, setTab] = useState('dashboard')
   const [loading, setLoading] = useState(true)
   const [toast, setToast] = useState(null)
@@ -220,16 +221,18 @@ export default function App() {
   const loadAll = useCallback(async () => {
     setLoading(true)
     try {
-      const [dealRows, taskRows, settingsRows, logRows] = await Promise.all([
+      const [dealRows, taskRows, settingsRows, logRows, trashRows] = await Promise.all([
         sbFetch('deals?select=*&order=created_at.desc'),
         sbFetch('tasks?select=*&order=due_date.asc'),
         sbFetch('settings?select=*'),
         sbFetch('email_log?select=*&order=sent_at.desc&limit=200'),
+        sbFetch('trash?select=*&order=deleted_at.desc').catch(()=>[]),
       ])
       setDeals(dealRows.map(rowToDeal))
       setTasks(taskRows)
       const s={}; settingsRows.forEach(r=>{s[r.key]=r.value}); setSettings(s)
       setEmailLog(logRows)
+      setTrash(trashRows||[])
     } catch(e) { showToast('Database error: '+e.message, true) }
     finally { setLoading(false) }
   },[showToast])
@@ -297,10 +300,44 @@ export default function App() {
 
   async function deleteDeal(id) {
     const d=deals.find(x=>x.id===id)
-    if(!confirm(`Delete deal for ${d?.name}?\nThis cannot be undone.`))return
+    if(!confirm(`Move "${d?.name}" to Recycle Bin?\nYou can restore it within 7 days.`))return
     try {
+      // Move to trash table instead of permanent delete
+      const deletedAt = new Date().toISOString()
+      const expiresAt = new Date(Date.now() + 7*24*60*60*1000).toISOString()
+      await sbFetch('trash',{method:'POST',body:JSON.stringify({
+        id:'TR'+Date.now(),
+        deal_id:id,
+        deal_data:JSON.stringify(dealToRow(d)),
+        deal_name:d.name,
+        deleted_at:deletedAt,
+        expires_at:expiresAt
+      })})
       await sbFetch(`deals?id=eq.${id}`,{method:'DELETE'})
-      setDeals(prev=>prev.filter(x=>x.id!==id)); setModal(null); showToast('Deal deleted')
+      setDeals(prev=>prev.filter(x=>x.id!==id))
+      setTrash(prev=>[{id:'TR'+Date.now(),deal_id:id,deal_name:d.name,deal_data:JSON.stringify(dealToRow(d)),deleted_at:deletedAt,expires_at:expiresAt},...prev])
+      setModal(null)
+      showToast('Deal moved to Recycle Bin — restore within 7 days')
+    } catch(e){showToast('Error: '+e.message,true)}
+  }
+
+  async function restoreDeal(trashItem) {
+    try {
+      const dealData = JSON.parse(trashItem.deal_data)
+      await sbFetch('deals',{method:'POST',body:JSON.stringify(dealData)})
+      await sbFetch(`trash?id=eq.${trashItem.id}`,{method:'DELETE'})
+      setDeals(prev=>[rowToDeal(dealData),...prev])
+      setTrash(prev=>prev.filter(x=>x.id!==trashItem.id))
+      showToast('Deal restored successfully')
+    } catch(e){showToast('Error restoring deal: '+e.message,true)}
+  }
+
+  async function permanentDelete(trashItem) {
+    if(!confirm(`Permanently delete "${trashItem.deal_name}"? This cannot be undone.`))return
+    try {
+      await sbFetch(`trash?id=eq.${trashItem.id}`,{method:'DELETE'})
+      setTrash(prev=>prev.filter(x=>x.id!==trashItem.id))
+      showToast('Permanently deleted')
     } catch(e){showToast('Error: '+e.message,true)}
   }
 
@@ -572,13 +609,14 @@ export default function App() {
   const TABS = {
     dashboard: 'Dashboard', pipeline: 'Kanban Pipeline', contacts: 'Contacts',
     tasks: 'Tasks', referrals: 'Referral Partners', renewals: 'Renewals',
-    signature: 'Email Signature', schedule: 'Email Schedule'
+    signature: 'Email Signature', schedule: 'Email Schedule', trash: 'Recycle Bin'
   }
   const SUBS = {
     dashboard: 'Welcome back, Vatsal', pipeline: 'Track your deals across every stage',
     contacts: 'All your mortgage clients', tasks: 'Follow-up tasks and to-dos',
     referrals: 'See who is sending you business', renewals: 'Maturity dates and renewals',
-    signature: 'Customize your email signature', schedule: 'Upcoming automated emails'
+    signature: 'Customize your email signature', schedule: 'Upcoming automated emails',
+    trash: 'Deleted deals — restore within 7 days'
   }
 
   if (!authed) return <LoginScreen onLogin={()=>setAuthed(true)}/>
@@ -606,6 +644,10 @@ export default function App() {
             <button className={`nav-item${tab==='renewals'?' active':''}`} onClick={()=>setTab('renewals')}>
               <span className="nav-icon">🔔</span><span>Renewals</span>
               {urgentRenewals.length>0&&<span className="nav-badge">{urgentRenewals.length}</span>}
+            </button>
+            <button className={`nav-item${tab==='trash'?' active':''}`} onClick={()=>setTab('trash')}>
+              <span className="nav-icon">🗑</span><span>Recycle Bin</span>
+              {trash.length>0&&<span className="nav-badge" style={{background:'rgba(107,114,128,.9)'}}>{trash.length}</span>}
             </button>
             <div className="sb-sec">Settings</div>
             {[['signature','✍️','Email Signature'],['schedule','📅','Email Schedule']].map(([id,icon,label])=>(
@@ -660,6 +702,7 @@ export default function App() {
                 {tab==='renewals'&&<Renewals deals={deals} setModal={setModal}/>}
                 {tab==='signature'&&<Signature settings={settings} saveSettings={saveSettings} sendTestEmail={sendTestEmail}/>}
                 {tab==='schedule'&&<EmailSchedule deals={deals} emailLog={emailLog}/>}
+                {tab==='trash'&&<RecycleBin trash={trash} onRestore={restoreDeal} onDelete={permanentDelete}/>}
               </>
             )}
           </div>
@@ -1640,16 +1683,8 @@ function DealModal({ deal: initialDeal, deals, onSave, onDelete, onClose, onStag
                 <div className="field"><label>Maturity / Renewal Date</label><input type="date" value={form.renewal||''} onChange={e=>setForm(p=>({...p,renewal:e.target.value}))}/></div>
               </div>
             </div>
-            <div className="fsec"><div className="fsec-hdr"><div className="fsec-icon">🤝</div><div><div className="fsec-title">Referral Partner</div></div></div>
-              <div className="fg fg3">
-                <div className="field"><label>Partner Name</label><input type="text" value={form.refName||''} onChange={e=>setForm(p=>({...p,refName:e.target.value}))}/></div>
-                <div className="field"><label>Company / Brokerage</label><input type="text" value={form.refCompany||''} onChange={e=>setForm(p=>({...p,refCompany:e.target.value}))}/></div>
-                <div className="field"><label>Partner Type</label><select value={form.refType||''} onChange={e=>setForm(p=>({...p,refType:e.target.value}))}><option value="">Select…</option>{REFTYPES.map(s=><option key={s}>{s}</option>)}</select></div>
-              </div>
-              <div className="fg fg2">
-                <div className="field"><label>Partner Email</label><input type="email" value={form.refEmail||''} onChange={e=>setForm(p=>({...p,refEmail:e.target.value}))}/></div>
-                <div className="field"><label>Partner Phone</label><input type="tel" value={form.refPhone||''} onChange={e=>setForm(p=>({...p,refPhone:e.target.value}))}/></div>
-              </div>
+            <div className="fsec"><div className="fsec-hdr"><div className="fsec-icon">🤝</div><div><div className="fsec-title">Referral Partner</div><div className="fsec-sub">Start typing to auto-fill a saved partner</div></div></div>
+              <PartnerAutofill form={form} setForm={setForm} deals={deals}/>
             </div>
             <div className="fsec"><div className="fsec-hdr"><div className="fsec-icon">📝</div><div><div className="fsec-title">Notes</div></div></div>
               <div className="field"><label>Internal Notes</label><textarea value={form.initNotes||''} onChange={e=>setForm(p=>({...p,initNotes:e.target.value}))} rows={3}/></div>
@@ -1775,4 +1810,163 @@ function TaskModal({ task, deals, onSave, onDelete, onClose }) {
 
 function EmptyState({ setModal }) {
   return <div style={{textAlign:'center',padding:70}}><div style={{fontSize:52,marginBottom:18}}>🏠</div><div style={{fontSize:20,fontWeight:800,marginBottom:8}}>No deals yet</div><div style={{fontSize:14,color:'var(--text2)',marginBottom:28}}>Add your first mortgage file to get started.</div><button className="btn btn-s btn-lg" onClick={()=>setModal({type:'deal',data:null})}>+ Add Your First Deal</button></div>
+}
+
+// ── RECYCLE BIN ──
+function RecycleBin({ trash, onRestore, onDelete }) {
+  if (!trash.length) return (
+    <div style={{textAlign:'center',padding:70,color:'var(--text2)'}}>
+      <div style={{fontSize:48,marginBottom:16}}>🗑</div>
+      <div style={{fontSize:18,fontWeight:700,marginBottom:8,color:'var(--text)'}}>Recycle Bin is empty</div>
+      <div style={{fontSize:13}}>Deleted deals will appear here for 7 days before being permanently removed.</div>
+    </div>
+  )
+
+  function daysLeft(expiresAt) {
+    if (!expiresAt) return 0
+    const days = Math.round((new Date(expiresAt) - new Date()) / 86400000)
+    return Math.max(0, days)
+  }
+
+  return (
+    <div style={{maxWidth:700}}>
+      <div style={{background:'#fffbeb',border:'1px solid #fde68a',borderRadius:'var(--rad-lg)',padding:'12px 16px',marginBottom:20,fontSize:13,color:'#92400e'}}>
+        ⚠️ Deals in the Recycle Bin will be <strong>permanently deleted after 7 days</strong>. Restore any deal before it expires.
+      </div>
+      {trash.map(item => {
+        const days = daysLeft(item.expires_at)
+        const urgent = days <= 2
+        return (
+          <div key={item.id} style={{background:'var(--bg)',border:'1px solid var(--border)',borderRadius:'var(--rad-lg)',padding:'16px 20px',marginBottom:12,boxShadow:'var(--sh)',display:'flex',alignItems:'center',gap:16}}>
+            <div style={{width:40,height:40,borderRadius:'50%',background:'#f3f4f6',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16,flexShrink:0}}>🗑</div>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontSize:14,fontWeight:700,color:'var(--text)'}}>{item.deal_name}</div>
+              <div style={{fontSize:12,color:'var(--text2)',marginTop:2}}>
+                Deleted {item.deleted_at ? new Date(item.deleted_at).toLocaleDateString('en-CA') : '—'}
+              </div>
+            </div>
+            <div style={{textAlign:'right',flexShrink:0}}>
+              <div style={{fontSize:12,fontWeight:700,color:urgent?'#dc2626':'#d97706',marginBottom:8}}>
+                {days === 0 ? 'Expires today' : `${days} day${days!==1?'s':''} left`}
+              </div>
+              <div style={{display:'flex',gap:8}}>
+                <button className="btn btn-s" style={{fontSize:12,padding:'5px 12px'}} onClick={()=>onRestore(item)}>↩ Restore</button>
+                <button className="btn btn-d" style={{fontSize:12,padding:'5px 12px'}} onClick={()=>onDelete(item)}>✕ Delete</button>
+              </div>
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+// ── PARTNER AUTOFILL ──
+function PartnerAutofill({ form, setForm, deals }) {
+  const [suggestions, setSuggestions] = useState([])
+  const [showSuggestions, setShowSuggestions] = useState(false)
+
+  // Build unique partner list from all deals
+  const savedPartners = []
+  const seen = new Set()
+  deals.forEach(d => {
+    if (d.refName && d.refName.trim() && !seen.has(d.refName.trim())) {
+      seen.add(d.refName.trim())
+      savedPartners.push({
+        name: d.refName.trim(),
+        company: d.refCompany || '',
+        type: d.refType || '',
+        email: d.refEmail || '',
+        phone: d.refPhone || ''
+      })
+    }
+  })
+
+  function handleNameChange(val) {
+    setForm(p => ({ ...p, refName: val }))
+    if (val.length >= 1) {
+      const filtered = savedPartners.filter(p =>
+        p.name.toLowerCase().includes(val.toLowerCase())
+      )
+      setSuggestions(filtered)
+      setShowSuggestions(filtered.length > 0)
+    } else {
+      setShowSuggestions(false)
+    }
+  }
+
+  function selectPartner(partner) {
+    setForm(p => ({
+      ...p,
+      refName: partner.name,
+      refCompany: partner.company,
+      refType: partner.type,
+      refEmail: partner.email,
+      refPhone: partner.phone
+    }))
+    setShowSuggestions(false)
+  }
+
+  return (
+    <div>
+      <div className="fg fg3" style={{marginBottom:14}}>
+        <div className="field" style={{position:'relative'}}>
+          <label>Partner Name</label>
+          <input
+            type="text"
+            value={form.refName||''}
+            onChange={e=>handleNameChange(e.target.value)}
+            onBlur={()=>setTimeout(()=>setShowSuggestions(false),150)}
+            onFocus={()=>{if(form.refName&&suggestions.length)setShowSuggestions(true)}}
+            placeholder="Start typing to search saved partners..."
+          />
+          {showSuggestions&&(
+            <div style={{position:'absolute',top:'100%',left:0,right:0,background:'var(--bg)',border:'1px solid var(--border2)',borderRadius:'var(--rad)',boxShadow:'var(--sh-md)',zIndex:100,maxHeight:180,overflowY:'auto'}}>
+              {suggestions.map((p,i)=>(
+                <div key={i} onClick={()=>selectPartner(p)}
+                  style={{padding:'10px 14px',cursor:'pointer',borderBottom:'1px solid var(--border)',display:'flex',alignItems:'center',gap:10}}
+                  onMouseEnter={e=>e.currentTarget.style.background='var(--brand-light)'}
+                  onMouseLeave={e=>e.currentTarget.style.background=''}>
+                  <div style={{width:30,height:30,borderRadius:'50%',background:'var(--brand-light)',color:'var(--brand)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:700,flexShrink:0}}>
+                    {p.name.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase()}
+                  </div>
+                  <div>
+                    <div style={{fontSize:13,fontWeight:700}}>{p.name}</div>
+                    <div style={{fontSize:11,color:'var(--text2)'}}>{p.company}{p.company&&p.type?' · ':''}{p.type}</div>
+                  </div>
+                  <div style={{marginLeft:'auto',fontSize:10,color:'var(--brand)',fontWeight:600}}>Auto-fill →</div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        <div className="field">
+          <label>Company / Brokerage</label>
+          <input type="text" value={form.refCompany||''} onChange={e=>setForm(p=>({...p,refCompany:e.target.value}))} placeholder="e.g. RE/MAX Moncton"/>
+        </div>
+        <div className="field">
+          <label>Partner Type</label>
+          <select value={form.refType||''} onChange={e=>setForm(p=>({...p,refType:e.target.value}))}>
+            <option value="">Select…</option>
+            {REFTYPES.map(s=><option key={s}>{s}</option>)}
+          </select>
+        </div>
+      </div>
+      <div className="fg fg2">
+        <div className="field">
+          <label>Partner Email</label>
+          <input type="email" value={form.refEmail||''} onChange={e=>setForm(p=>({...p,refEmail:e.target.value}))}/>
+        </div>
+        <div className="field">
+          <label>Partner Phone</label>
+          <input type="tel" value={form.refPhone||''} onChange={e=>setForm(p=>({...p,refPhone:e.target.value}))}/>
+        </div>
+      </div>
+      {savedPartners.length>0&&(
+        <div style={{fontSize:11,color:'var(--text2)',marginTop:4}}>
+          💡 {savedPartners.length} saved partner{savedPartners.length!==1?'s':''} — start typing to auto-fill
+        </div>
+      )}
+    </div>
+  )
 }
