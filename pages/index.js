@@ -986,6 +986,7 @@ function Referrals({ deals, refFilter, setRefFilter, refSort, setRefSort, setMod
 function EmailSchedule({ deals, emailLog }) {
   const [preview, setPreview] = useState(null) // {subject, html, dealName, type}
   const [editItem, setEditItem] = useState(null) // {item, subject, body}
+  const [savedEdits, setSavedEdits] = useState({}) // {type: {subject, body}}
 
   const EMAIL_LABELS = {
     'partner_biweekly': {label:'Partner Status Update',color:'#2563eb',bg:'#eff6ff'},
@@ -1173,7 +1174,8 @@ Vatsal Barot | Associate Mortgage Broker`
         ) : (
           next30.map((e,i) => {
             const info = EMAIL_LABELS[e.type] || {label:e.type,color:'#6b7280',bg:'#f9fafb'}
-            const prev = EMAIL_PREVIEWS[e.type] || {subject:'Automated email',body:'This email will be sent automatically based on your deal data.'}
+            const basePrev = EMAIL_PREVIEWS[e.type] || {subject:'Automated email',body:'This email will be sent automatically based on your deal data.'}
+            const prev = savedEdits[e.type] || basePrev
             const daysAway = Math.round((e.sendDate - now) / 86400000)
             return (
               <div key={i} className="email-sched-row" style={{flexDirection:'column',gap:8,alignItems:'stretch'}}>
@@ -1191,11 +1193,11 @@ Vatsal Barot | Associate Mortgage Broker`
                 </div>
                 <div style={{display:'flex',gap:8,paddingLeft:60}}>
                   <button className="btn" style={{fontSize:11,padding:'4px 12px'}}
-                    onClick={()=>setPreview({subject:prev.subject,body:prev.body,dealName:e.dealName,type:info.label,sendDate:e.sendDate.toLocaleDateString('en-CA'),recipient:e.recipient})}>
+                    onClick={()=>{const firstName=e.dealName.split(' ')[0];const s=prev.subject.replace(/\[Client\]/g,firstName);const b=prev.body.replace(/\[Client\]/g,firstName);setPreview({subject:s,body:b,dealName:e.dealName,type:info.label,sendDate:e.sendDate.toLocaleDateString('en-CA'),recipient:e.recipient})}}>
                     👁 Preview
                   </button>
                   <button className="btn" style={{fontSize:11,padding:'4px 12px'}}
-                    onClick={()=>setEditItem({...e,subject:prev.subject,body:prev.body,info})}>
+                    onClick={()=>{const firstName=e.dealName.split(' ')[0];const s=prev.subject.replace(/\[Client\]/g,firstName);const b=prev.body.replace(/\[Client\]/g,firstName);setEditItem({...e,subject:s,body:b,info})}}>
                     ✏️ Edit Email
                   </button>
                 </div>
@@ -1283,7 +1285,8 @@ Vatsal Barot | Associate Mortgage Broker`
             </div>
             <div style={{fontSize:11,color:'var(--text2)',marginTop:8}}>Note: Changes here are for reference only — to permanently change email templates, contact your developer.</div>
           </div>
-          <div style={{padding:'14px 24px',borderTop:'1px solid var(--border)',background:'var(--bg2)',display:'flex',gap:10}}>
+          <div style={{padding:'14px 24px',borderTop:'1px solid var(--border)',background:'var(--bg2)',display:'flex',gap:10,flexWrap:'wrap'}}>
+            <button className="btn btn-p" onClick={()=>{setSavedEdits(p=>({...p,[editItem.type]:{subject:editItem.subject,body:editItem.body}}));alert('✅ Email saved! This version will be shown in Preview. Note: to permanently change the template, contact your developer.');setEditItem(null)}}>💾 Save Edit</button>
             <button className="btn btn-s" onClick={()=>{setPreview({subject:editItem.subject,body:editItem.body,dealName:editItem.dealName,type:editItem.info?.label,sendDate:editItem.sendDate?.toLocaleDateString('en-CA'),recipient:editItem.recipient});setEditItem(null)}}>👁 Preview Changes</button>
             <button className="btn" onClick={()=>setEditItem(null)}>Close</button>
           </div>
