@@ -101,11 +101,18 @@ function tuid(){return'T'+Date.now()+Math.random().toString(36).slice(2,5)}
 function daysToBirthday(dob) {
   if (!dob) return null
   const today = new Date()
+  today.setHours(0,0,0,0)
   const parts = dob.split('-')
   if (parts.length < 3) return null
-  let next = new Date(today.getFullYear(), parseInt(parts[1])-1, parseInt(parts[2]))
-  if (next < today) next = new Date(today.getFullYear()+1, parseInt(parts[1])-1, parseInt(parts[2]))
-  return Math.round((next - today) / 86400000)
+  let bday = new Date(today.getFullYear(), parseInt(parts[1])-1, parseInt(parts[2]))
+  bday.setHours(0,0,0,0)
+  const daysThis = Math.round((bday - today) / 86400000)
+  if (daysThis >= -2 && daysThis <= 30) return daysThis
+  let bdayNext = new Date(today.getFullYear()+1, parseInt(parts[1])-1, parseInt(parts[2]))
+  bdayNext.setHours(0,0,0,0)
+  const daysNext = Math.round((bdayNext - today) / 86400000)
+  if (daysNext <= 30) return daysNext
+  return null
 }
 
 // Days until anniversary this year
