@@ -4,6 +4,10 @@ import { fundedFollowupEmail } from '../../../lib/emails'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
+// Only send funded follow-ups for deals in Funded stage
+// NOT for Old Files — Funded or Check In
+const ELIGIBLE_STAGE = 'Funded'
+
 export default async function handler(req, res) {
   if (req.headers.authorization !== `Bearer ${process.env.CRON_SECRET}`) {
     return res.status(401).json({ error: 'Unauthorized' })
@@ -19,13 +23,14 @@ export default async function handler(req, res) {
     phone: settings.sig_phone || '',
     brokerLicense: settings.sig_broker_license || '#30005730',
     brokerageLicense: settings.sig_brokerage_license || '#3000168',
-    tagline: settings.sig_tagline || ''
+    tagline: settings.sig_tagline || '',
+    photoUrl: settings.sig_photo_url || ''
   }
 
   const { data: fundedDeals } = await supabase
     .from('deals')
     .select('*')
-    .eq('stage', 'Funded')
+    .eq('stage', ELIGIBLE_STAGE)
     .not('closing', 'is', null)
     .not('closing', 'eq', '')
 
@@ -38,6 +43,8 @@ export default async function handler(req, res) {
 
   for (const deal of fundedDeals) {
     if (!deal.b1_email) continue
+    if (deal.no_client_email) continue
+
     const closingDate = new Date(deal.closing)
     const daysSinceFunding = Math.floor((now - closingDate) / 86400000)
 
@@ -57,11 +64,7 @@ export default async function handler(req, res) {
       if (log?.length) continue
 
       const clientName = deal.b1_first || deal.name
-      const emailContent = fundedFollowupEmail({
-        clientName,
-        followupNumber: i + 1,
-        sig
-      })
+      const emailContent = fundedFollowupEmail({ clientName, followupNumber: i + 1, sig })
 
       await resend.emails.send({
         from: `${sig.name} <${sig.email}>`,
@@ -76,6 +79,7 @@ export default async function handler(req, res) {
         recipient: deal.b1_email
       })
 
+      // Auto task
       const taskId = 'T' + Date.now() + Math.random().toString(36).slice(2, 5)
       const dueDate = new Date(now.getTime() + 2 * 86400000).toISOString().slice(0, 10)
       await supabase.from('tasks').insert({
