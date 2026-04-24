@@ -1229,8 +1229,6 @@ Vatsal Barot | Associate Mortgage Broker`
           </table>
         )}
       </div>
-    </div>
-    <>
 
     {/* PREVIEW MODAL */}
     {preview && (
@@ -1292,7 +1290,7 @@ Vatsal Barot | Associate Mortgage Broker`
         </div>
       </div>
     )}
-    </>
+    </div>
   )
 }
 
