@@ -140,7 +140,64 @@ function daysToAnniversary(closing) {
   return null
 }
 
+const PASSWORD_HASH = 'Veda@15014'
+
+function LoginScreen({ onLogin }) {
+  const [pw, setPw] = useState('')
+  const [error, setError] = useState(false)
+  const [shake, setShake] = useState(false)
+
+  function handleLogin() {
+    if (pw === PASSWORD_HASH) {
+      localStorage.setItem('bd_auth', btoa(PASSWORD_HASH + '_' + Date.now()))
+      onLogin()
+    } else {
+      setError(true)
+      setShake(true)
+      setTimeout(() => setShake(false), 500)
+      setTimeout(() => setError(false), 3000)
+    }
+  }
+
+  function handleKey(e) {
+    if (e.key === 'Enter') handleLogin()
+  }
+
+  return (
+    <div style={{minHeight:'100vh',background:'linear-gradient(135deg,#0f172a,#1e3a5f)',display:'flex',alignItems:'center',justifyContent:'center',padding:24,fontFamily:'-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif'}}>
+      <div style={{background:'#fff',borderRadius:20,padding:'48px 40px',width:380,maxWidth:'95vw',boxShadow:'0 24px 60px rgba(0,0,0,0.3)',animation:shake?'shake 0.4s ease':'none'}}>
+        <style>{`@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}`}</style>
+        <div style={{textAlign:'center',marginBottom:32}}>
+          <div style={{width:56,height:56,background:'linear-gradient(135deg,#1e40af,#3b82f6)',borderRadius:14,display:'flex',alignItems:'center',justifyContent:'center',fontSize:26,margin:'0 auto 16px'}}>🏦</div>
+          <div style={{fontSize:22,fontWeight:800,color:'#0f172a',letterSpacing:'-0.02em'}}>BrokerDesk</div>
+          <div style={{fontSize:13,color:'#6b7280',marginTop:4}}>Mortgage CRM · Vatsal Barot</div>
+        </div>
+        <div style={{marginBottom:16}}>
+          <label style={{fontSize:11,fontWeight:700,color:'#6b7280',textTransform:'uppercase',letterSpacing:'0.05em',display:'block',marginBottom:6}}>Password</label>
+          <input
+            type="password"
+            value={pw}
+            onChange={e=>setPw(e.target.value)}
+            onKeyDown={handleKey}
+            placeholder="Enter your password"
+            autoFocus
+            style={{width:'100%',padding:'11px 14px',borderRadius:10,border:error?'2px solid #ef4444':'2px solid #e5e7eb',fontSize:14,fontFamily:'inherit',color:'#0f172a',outline:'none',boxSizing:'border-box',transition:'border-color 0.15s'}}
+          />
+          {error&&<div style={{fontSize:12,color:'#ef4444',marginTop:6}}>Incorrect password. Please try again.</div>}
+        </div>
+        <button
+          onClick={handleLogin}
+          style={{width:'100%',padding:'12px',background:'linear-gradient(135deg,#1e40af,#3b82f6)',color:'#fff',border:'none',borderRadius:10,fontSize:14,fontWeight:600,cursor:'pointer',fontFamily:'inherit'}}>
+          Sign In →
+        </button>
+        <div style={{fontSize:11,color:'#9ca3af',textAlign:'center',marginTop:16}}>Session stays active for 7 days</div>
+      </div>
+    </div>
+  )
+}
+
 export default function App() {
+  const [authed, setAuthed] = useState(false)
   const [deals, setDeals] = useState([])
   const [tasks, setTasks] = useState([])
   const [settings, setSettings] = useState({})
@@ -177,7 +234,25 @@ export default function App() {
     finally { setLoading(false) }
   },[showToast])
 
-  useEffect(()=>{loadAll()},[loadAll])
+  useEffect(()=>{
+    // Check existing session (valid for 7 days)
+    try {
+      const stored = localStorage.getItem('bd_auth')
+      if (stored) {
+        const decoded = atob(stored)
+        const parts = decoded.split('_')
+        const ts = parseInt(parts[parts.length-1])
+        const sevenDays = 7 * 24 * 60 * 60 * 1000
+        if (Date.now() - ts < sevenDays && decoded.startsWith(PASSWORD_HASH)) {
+          setAuthed(true)
+        } else {
+          localStorage.removeItem('bd_auth')
+        }
+      }
+    } catch(e) { localStorage.removeItem('bd_auth') }
+  }, [])
+
+  useEffect(()=>{if(authed)loadAll()},[loadAll, authed])
 
   const overdueTasks = tasks.filter(t=>{
     if(t.status==='Done'||t.status==='Cancelled')return false
@@ -506,6 +581,8 @@ export default function App() {
     signature: 'Customize your email signature', schedule: 'Upcoming automated emails'
   }
 
+  if (!authed) return <LoginScreen onLogin={()=>setAuthed(true)}/>
+
   return (
     <>
       <Head><title>BrokerDesk — Mortgage CRM</title></Head>
@@ -542,10 +619,11 @@ export default function App() {
               {sig.photoUrl
                 ? <img src={sig.photoUrl} alt={sig.name} style={{width:32,height:32,borderRadius:'50%',objectFit:'cover',flexShrink:0}}/>
                 : <div className="sb-av">VB</div>}
-              <div>
+              <div style={{flex:1,minWidth:0}}>
                 <div style={{fontSize:12,fontWeight:600,color:'#fff'}}>{sig.name}</div>
                 <div style={{fontSize:10,color:'rgba(255,255,255,.4)'}}>{sig.title}</div>
               </div>
+              <button onClick={()=>{localStorage.removeItem('bd_auth');setAuthed(false)}} title="Sign out" style={{background:'none',border:'none',cursor:'pointer',color:'rgba(255,255,255,.4)',fontSize:14,padding:'4px',flexShrink:0}}>⎋</button>
             </div>
           </div>
         </aside>
