@@ -4,12 +4,11 @@ import { staleDealEmail } from '../../../lib/emails'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
-// Only these stages trigger stale deal reminders to Vatsal
+// Stale deal reminders to Vatsal — every 4 days for 1 month
 const STALE_STAGES = {
   'Info Only / No Deal': { intervalDays: 4, maxEmails: 7 },
   'Pre-Approval': { intervalDays: 4, maxEmails: 7 }
 }
-// Check In and Old Files — Funded are intentionally excluded
 
 export default async function handler(req, res) {
   if (req.headers.authorization !== `Bearer ${process.env.CRON_SECRET}`) {
